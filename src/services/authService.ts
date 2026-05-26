@@ -1,4 +1,5 @@
 import type { User } from '@/types/user';
+import { API_BASE } from '@/config/api';
 
 declare global {
   interface Window {
@@ -28,7 +29,7 @@ export async function loginWithTelegram() {
 
     // Backenddan demo token olish
     try {
-      const response = await fetch('http://localhost:5000/api/v1/auth/telegram', {
+      const response = await fetch(`${API_BASE}/auth/telegram`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initdata: 'demo' }),
@@ -49,7 +50,7 @@ export async function loginWithTelegram() {
 
   // Telegram ichida — haqiqiy login
   try {
-    const response = await fetch('http://localhost:5000/api/v1/auth/telegram', {
+    const response = await fetch(`${API_BASE}/auth/telegram`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ initdata: initData }),
