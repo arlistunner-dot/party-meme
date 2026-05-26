@@ -37,7 +37,7 @@ function handleUpdate(update: Record<string, unknown>) {
               {
                 text: '🎮 O\'YNA',
                 web_app: {
-                  url: 'https://kathrin-symptomless-leeanna.ngrok-free.dev',
+                  url: process.env.WEB_APP_URL || 'https://lucky-adventure-production-1ca0.up.railway.app',
                 },
               },
             ],
