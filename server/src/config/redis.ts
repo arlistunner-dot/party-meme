@@ -8,11 +8,14 @@ let redisAvailable = false;
 
 function createRedisClient() {
   const url = process.env.REDIS_URL;
-  if (!url || !url.startsWith('redis://')) {
-    console.log('[Redis] REDIS_URL topilmadi — Redis o\'tkazib yuborildi');
+
+  // REDIS_URL yo'q, bo'sh, yoki localhost bo'lsa — o'tkazib yuborish
+  if (!url || url.length < 10 || url.includes('localhost') || url.includes('127.0.0.1')) {
+    console.log('[Redis] REDIS_URL topilmadi yoki localhost — Redis o\'tkazib yuborildi');
     return null;
   }
 
+  console.log('[Redis] Ulanmoqda:', url.substring(0, 20) + '...');
   const client = createClient({ url });
 
   client.on('error', (err) => {
@@ -35,7 +38,7 @@ export async function connectRedis() {
   try {
     await redis.connect();
     return redis;
-  } catch (err) {
+  } catch {
     console.error('[Redis] Ulanib bo\'lmadi — Redis o\'tkazib yuborildi');
     redis = null;
     return null;
