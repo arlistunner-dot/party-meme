@@ -25,7 +25,7 @@ export async function createRoom(hostId: number, options: {
 } = {}) {
   const roomCode = generateRoomCode();
 
-  const room = await queryOne(
+  const room = await queryOne<Record<string, unknown>>(
     `INSERT INTO rooms (room_code, host_id, max_players, rounds_count, is_private, game_mode)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
@@ -53,7 +53,10 @@ export async function createRoom(hostId: number, options: {
  * Xona ma'lumotlari
  */
 export async function getRoom(roomCode: string) {
-  const room = await queryOne('SELECT * FROM rooms WHERE room_code = $1', [roomCode]);
+  const room = await queryOne<Record<string, unknown>>(
+    'SELECT * FROM rooms WHERE room_code = $1',
+    [roomCode]
+  );
   if (!room) return null;
 
   const players = await query(
@@ -133,7 +136,7 @@ export async function leaveRoom(roomCode: string, userId: number) {
   );
 
   if (!host) {
-    const nextPlayer = await queryOne(
+    const nextPlayer = await queryOne<Record<string, unknown>>(
       `UPDATE room_players SET is_host = true
        WHERE room_id = $1 AND is_active = true
        AND id = (SELECT id FROM room_players WHERE room_id = $1 AND is_active = true ORDER BY seat_number LIMIT 1)

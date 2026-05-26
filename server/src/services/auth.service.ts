@@ -62,17 +62,17 @@ function validateInitData(initData: string): TelegramUser | null {
  * Telegram initData bilan autentifikatsiya
  */
 export async function authenticateTelegram(initData: string) {
-  // Demo rejim — Telegram tashqarisida
+  // Demo rejim
   if (initData === 'demo') {
     const demoTelegramId = 999999;
 
-    let user = await queryOne(
+    let user = await queryOne<Record<string, unknown>>(
       'SELECT * FROM users WHERE telegram_id = $1',
       [demoTelegramId]
     );
 
     if (!user) {
-      user = await queryOne(
+      user = await queryOne<Record<string, unknown>>(
         `INSERT INTO users (
           telegram_id, username, first_name,
           coin_balance, max_card_slots, language
@@ -83,7 +83,7 @@ export async function authenticateTelegram(initData: string) {
     }
 
     const token = jwt.sign(
-      { userId: user!.id, telegramId: demoTelegramId },
+      { userId: (user as Record<string, unknown>).id, telegramId: demoTelegramId },
       JWT.SECRET,
       { expiresIn: 86400 }
     );
@@ -98,14 +98,14 @@ export async function authenticateTelegram(initData: string) {
   }
 
   // 2. Foydalanuvchini DB dan topish
-  let user = await queryOne<{ id: number }>(
+  let user = await queryOne<Record<string, unknown>>(
     'SELECT id FROM users WHERE telegram_id = $1',
     [tgUser.id]
   );
 
   // 3. Yangi foydalanuvchi yaratish
   if (!user) {
-    user = await queryOne<{ id: number }>(
+    user = await queryOne<Record<string, unknown>>(
       `INSERT INTO users (
         telegram_id, username, first_name, last_name,
         avatar_url, is_premium, coin_balance, max_card_slots,
@@ -133,12 +133,12 @@ export async function authenticateTelegram(initData: string) {
   // 4. Last active yangilash
   await query(
     'UPDATE users SET last_active_at = NOW() WHERE id = $1',
-    [user.id]
+    [(user as Record<string, unknown>).id]
   );
 
   // 5. JWT token yaratish
   const token = jwt.sign(
-    { userId: user.id, telegramId: tgUser.id },
+    { userId: (user as Record<string, unknown>).id, telegramId: tgUser.id },
     JWT.SECRET,
     { expiresIn: JWT.EXPIRY }
   );
@@ -146,7 +146,7 @@ export async function authenticateTelegram(initData: string) {
   // 6. To'liq foydalanuvchi ma'lumotlari
   const fullUser = await queryOne(
     `SELECT * FROM users WHERE id = $1`,
-    [user.id]
+    [(user as Record<string, unknown>).id]
   );
 
   return { token, user: fullUser };
