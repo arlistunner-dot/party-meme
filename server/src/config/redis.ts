@@ -48,51 +48,30 @@ export function isRedisAvailable(): boolean {
 
 export async function getRedis(key: string): Promise<string | null> {
   if (!redis || !redisAvailable) return null;
-  try {
-    return await redis.get(key);
-  } catch {
-    return null;
-  }
+  try { return await redis.get(key); } catch { return null; }
 }
 
 export async function setRedis(key: string, value: string, ttl?: number): Promise<void> {
   if (!redis || !redisAvailable) return;
   try {
-    if (ttl) {
-      await redis.setEx(key, ttl, value);
-    } else {
-      await redis.set(key, value);
-    }
-  } catch {
-    // Redis xato — e'tiborsiz qoldirish
-  }
+    if (ttl) { await redis.setEx(key, ttl, value); }
+    else { await redis.set(key, value); }
+  } catch {}
 }
 
 export async function delRedis(key: string): Promise<void> {
   if (!redis || !redisAvailable) return;
-  try {
-    await redis.del(key);
-  } catch {
-    // Redis xato
-  }
+  try { await redis.del(key); } catch {}
 }
 
 export async function incrRedis(key: string): Promise<number> {
   if (!redis || !redisAvailable) return 0;
-  try {
-    return await redis.incr(key);
-  } catch {
-    return 0;
-  }
+  try { return await redis.incr(key); } catch { return 0; }
 }
 
 export async function expireRedis(key: string, seconds: number): Promise<void> {
   if (!redis || !redisAvailable) return;
-  try {
-    await redis.expire(key, seconds);
-  } catch {
-    // Redis xato
-  }
+  try { await redis.expire(key, seconds); } catch {}
 }
 
 export default redis;
