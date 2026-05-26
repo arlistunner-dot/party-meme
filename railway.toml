@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "cd server && npm install && npm run build"
+buildCommand = "cd server && npm install && npm run db:init && npm run build"
 
 [deploy]
-startCommand = "cd server && npm run db:init && node dist/index.js"
+startCommand = "cd server && node dist/index.js"
