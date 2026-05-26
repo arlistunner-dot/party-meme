@@ -1,6 +1,14 @@
 // ===== API CONFIG =====
-export const API_BASE = 'http://localhost:5000/api/v1';
-export const WS_URL = 'http://localhost:5000';
+const BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? `${window.location.origin}/api/v1`
+  : 'http://localhost:5000/api/v1';
+
+const WS_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? window.location.origin
+  : 'http://localhost:5000';
+
+export const API_BASE = BASE_URL;
+export const WS_URL = WS_BASE;
 
 export const API_CONFIG = {
   BASE_URL: API_BASE,
