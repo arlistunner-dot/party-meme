@@ -1,3 +1,5 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { startBot } from './bot.js';
 import express from 'express';
 import cors from 'cors';
@@ -37,6 +39,11 @@ app.use('/api/v1/shop', shopRoutes);
 app.use('/api/v1/rating', ratingRoutes);
 app.use('/api/v1/cards', cardRoutes);
 
+// ============ FRONTEND ============
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.join(__dirname, '../../dist')));
+
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -44,6 +51,11 @@ app.get('/api/health', (_req, res) => {
 
 // Xatolarni ushlash
 app.use(errorHandler);
+
+// SPA fallback
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../../dist/index.html'));
+});
 
 // ============ START ============
 async function start() {
