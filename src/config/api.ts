@@ -1,14 +1,13 @@
 // ===== API CONFIG =====
-const BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+
+export const API_BASE = isProduction
   ? `${window.location.origin}/api/v1`
   : 'http://localhost:5000/api/v1';
 
-const WS_BASE = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+export const WS_URL = isProduction
   ? window.location.origin
   : 'http://localhost:5000';
-
-export const API_BASE = BASE_URL;
-export const WS_URL = WS_BASE;
 
 export const API_CONFIG = {
   BASE_URL: API_BASE,
@@ -16,6 +15,21 @@ export const API_CONFIG = {
   HEADERS: {
     'Content-Type': 'application/json',
   },
+};
+
+export const WS_EVENTS = {
+  JOIN_ROOM: 'join_room',
+  LEAVE_ROOM: 'leave_room',
+  PLAYER_READY: 'player_ready',
+  GAME_START: 'game_start',
+  SUBMIT_ANSWER: 'submit_answer',
+  SELECT_WINNER: 'select_winner',
+  ROOM_UPDATE: 'room_update',
+  NEW_ROUND: 'new_round',
+  SHOW_ANSWERS: 'show_answers',
+  ROUND_RESULT: 'round_result',
+  GAME_OVER: 'game_over',
+  TIMER_TICK: 'timer_tick',
 };
 
 export const API_ENDPOINTS = {
@@ -27,9 +41,8 @@ export const API_ENDPOINTS = {
     STATS: '/me/stats',
     DAILY_BONUS: '/me/daily-bonus',
     ADS_REWARD: '/ads/reward',
-      LEADERBOARD: '/rating',
-  LEADERBOARD_CREATORS: '/rating/creators',
-
+    LEADERBOARD: '/rating',
+    LEADERBOARD_CREATORS: '/rating/creators',
   },
   ROOMS: {
     BASE: '/rooms',
@@ -59,6 +72,11 @@ export const API_ENDPOINTS = {
     BUY_CARD: '/shop/buy-card',
     BUY_SLOTS: '/shop/buy-slots',
     BUY_COINS: '/shop/buy-coins',
+    PURCHASE_COINS: '/shop/buy-coins',
+    PURCHASE_SLOT: '/shop/buy-slots',
+  },
+  ADS: {
+    REWARD: '/ads/reward',
   },
   RATING: {
     BASE: '/rating',
