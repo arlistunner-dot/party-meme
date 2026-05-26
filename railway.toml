@@ -1,6 +1,7 @@
 [build]
 builder = "nixpacks"
-buildCommand = cd server && npm install && npm run build && echo "rebuild done"
+buildCommand = cd server && npm install && npm run build
+
 
 [deploy]
 startCommand = "cd server && node dist/index.js"
