@@ -1,6 +1,5 @@
 import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
-import { getRating, getUserRank, getWeeklyTop } from '../services/rating.service.js';
 import { getRating, getUserRank, getWeeklyTop, getCreatorTop } from '../services/rating.service.js';
 
 const router = Router();
@@ -60,6 +59,5 @@ router.get('/creators', async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: message });
   }
 });
-
 
 export default router;

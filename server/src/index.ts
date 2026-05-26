@@ -9,16 +9,14 @@ import { connectRedis } from './config/redis.js';
 import { initSocket } from './socket/index.js';
 import { generalLimiter } from './middleware/rateLimit.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import shopRoutes from './routes/shop.routes.js';
-import ratingRoutes from './routes/rating.routes.js';
-import cardRoutes from './routes/card.routes.js';
-
 
 // Routes
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import roomRoutes from './routes/room.routes.js';
 import shopRoutes from './routes/shop.routes.js';
+import ratingRoutes from './routes/rating.routes.js';
+import cardRoutes from './routes/card.routes.js';
 
 dotenv.config();
 
@@ -35,7 +33,6 @@ app.use(generalLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', userRoutes);
 app.use('/api/v1/rooms', roomRoutes);
-app.use('/api/v1/shop', shopRoutes);
 app.use('/api/v1/shop', shopRoutes);
 app.use('/api/v1/rating', ratingRoutes);
 app.use('/api/v1/cards', cardRoutes);
