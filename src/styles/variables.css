@@ -1,0 +1,80 @@
+:root {
+  /* Shriftlar */
+  --font-display: 'Fredoka', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+
+  /* Asosiy ranglar — chuqur qorong'u */
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #16162a;
+  --bg-surface: #1a1a2e;
+
+  /* Matn */
+  --text-primary: #f0f0f0;
+  --text-secondary: #9898b0;
+  --text-muted: #5a5a72;
+
+  /* Qizil karta */
+  --card-red: #ff4757;
+  --card-red-dark: #c0392b;
+  --card-red-glow: rgba(255, 71, 87, 0.35);
+
+  /* Ko'k karta */
+  --card-blue: #3742fa;
+  --card-blue-dark: #2532a8;
+  --card-blue-glow: rgba(55, 66, 250, 0.35);
+
+  /* Reklama karta */
+  --card-ad: #f0c040;
+  --card-ad-dark: #d4a017;
+  --card-ad-glow: rgba(240, 192, 64, 0.35);
+
+  /* Aksent */
+  --accent-primary: #ff006e;
+  --accent-secondary: #ffd93d;
+  --accent-success: #2ed573;
+  --accent-warning: #ffa502;
+  --accent-danger: #ff4757;
+
+  /* Neon */
+  --neon-pink: #ff006e;
+  --neon-blue: #00b4d8;
+  --neon-green: #2ed573;
+  --neon-yellow: #ffd93d;
+  --neon-purple: #9b5de5;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Soya */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-glow-red: 0 0 20px var(--card-red-glow);
+  --shadow-glow-blue: 0 0 20px var(--card-blue-glow);
+  --shadow-glow-ad: 0 0 20px var(--card-ad-glow);
+
+  /* Animatsiya */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+
+  /* Karta */
+  --card-width: 130px;
+  --card-height: 185px;
+  --card-radius: 12px;
+
+  /* Nav balandliklari */
+  --header-height: 48px;
+  --nav-height: 64px;
+}

@@ -1,0 +1,112 @@
+/**
+ * BREND MAVZUSI (Branded Room)
+ *
+ * Bu fayl CSS o'zgaruvchilar bilan ishlaydi.
+ * Brend kelganda bu qiymatlar JavaScript orqali o'zgartiriladi:
+ *
+ * document.documentElement.style.setProperty('--brand-primary', '#DA291C');
+ * document.documentElement.style.setProperty('--brand-bg-image', 'url(...)');
+ */
+
+:root {
+  /* Standart – brend yo'q */
+  --brand-primary: var(--accent-primary);
+  --brand-secondary: var(--accent-secondary);
+  --brand-bg-image: none;
+  --brand-logo-url: none;
+  --brand-name: '';
+  --brand-text-color: #ffffff;
+  --brand-card-accent: var(--card-blue);
+}
+
+/* ---- BREND XONA KOMPONENTLARI ---- */
+
+.branded-room {
+  background-image: var(--brand-bg-image);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.branded-room::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  z-index: 0;
+}
+
+.branded-room > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Brend logo */
+.brand-logo {
+  position: absolute;
+  top: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  max-height: 40px;
+  max-width: 150px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+/* Brend nomi */
+.brand-name {
+  position: absolute;
+  bottom: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--brand-text-color);
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+/* Brend tugmasi */
+.branded-room .btn--primary {
+  background: var(--brand-primary);
+  border-color: var(--brand-secondary);
+}
+
+/* Brend kartalari */
+.branded-room .card--red {
+  background: linear-gradient(145deg, var(--brand-primary), var(--brand-secondary));
+}
+
+/* G'alaba animatsiyasi brend rangida */
+.branded-room .winner-screen {
+  --confetti-color: var(--brand-primary);
+}
+
+/* ---- MISOL: McDONALD'S ---- */
+/*
+.branded-room--mcdonalds {
+  --brand-primary: #DA291C;
+  --brand-secondary: #FFC72C;
+  --brand-bg-image: url('/brands/mcdonalds/bg.jpg');
+  --brand-logo-url: url('/brands/mcdonalds/logo.svg');
+  --brand-text-color: #ffffff;
+}
+*/
+
+/* ---- MISOL: COCA-COLA ---- */
+/*
+.branded-room--cocacola {
+  --brand-primary: #F40009;
+  --brand-secondary: #000000;
+  --brand-bg-image: url('/brands/cocacola/bg.jpg');
+  --brand-logo-url: url('/brands/cocacola/logo.svg');
+  --brand-text-color: #ffffff;
+}
+*/
