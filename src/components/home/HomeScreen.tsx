@@ -17,7 +17,11 @@ function getVideoCount(): { used: number; date: string } {
     const saved = localStorage.getItem('video_bonus_data');
     if (saved) {
       const data = JSON.parse(saved);
-      if (data.date === new Date().toDateString()) return data;
+      const today = new Date().toDateString();
+      // Har kun yangilanadi
+      if (data.date === today) {
+        return data;
+      }
     }
   } catch {}
   return { used: 0, date: new Date().toDateString() };
@@ -63,8 +67,12 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
     } catch {}
   }, []);
 
+  // Har soniyada localStorage yangilash
   useEffect(() => {
-    const interval = setInterval(() => setVideoData(getVideoCount()), 1000);
+    const interval = setInterval(() => {
+      const current = getVideoCount();
+      setVideoData(current);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -134,7 +142,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       />
 
-      {/* KONTENT — ASL TARTIB */}
+      {/* KONTENT */}
       <div
         style={{
           position: 'relative',
@@ -149,7 +157,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         {/* TEPADA BO'SH JOY — logo uchun */}
         <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 15px)' }} />
 
-        {/* KUNLIK BONUS — tugmalar USTIDA, ixcham */}
+        {/* KUNLIK BONUS — doimo ko'rinadi (5 ta limit bo'lsa) */}
         {showDailyBonus && (
           <div
             style={{
@@ -227,7 +235,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         {/* MARKAZIY BO'SH JOY — logo uchun */}
         <div style={{ flex: 1 }} />
 
-        {/* TUGMALAR — PIRAMIDA — ASL JOYIDA */}
+        {/* TUGMALAR — PIRAMIDA */}
         <div
           style={{
             display: 'flex',
