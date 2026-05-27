@@ -96,15 +96,14 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
   return (
     <div
       style={{
-        position: 'relative',
-        width: '100%',
-        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#0a0a0f',
+        height: '100vh',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {/* FON */}
+      {/* FON RASMI */}
       <div
         style={{
           position: 'fixed',
@@ -121,7 +120,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       />
 
-      {/* Overlay */}
+      {/* Qorong'u overlay */}
       <div
         style={{
           position: 'fixed',
@@ -135,25 +134,26 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       />
 
-      {/* KONTENT — spacer yo'q, hammasi birgalikda */}
+      {/* KONTENT — ASL TARTIB */}
       <div
         style={{
           position: 'relative',
           zIndex: 2,
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
           flex: 1,
-          padding: '20px',
-          gap: '10px',
+          padding: '0 20px',
+          paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px) + 12px)',
         }}
       >
-        {/* KUNLIK BONUS — tugmalar USTIDA */}
+        {/* TEPADA BO'SH JOY — logo uchun */}
+        <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 15px)' }} />
+
+        {/* KUNLIK BONUS — tugmalar USTIDA, ixcham */}
         {showDailyBonus && (
           <div
             style={{
-              width: '100%',
-              maxWidth: '340px',
+              marginTop: '8px',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
@@ -224,81 +224,108 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           </div>
         )}
 
-        {/* O'YNASH */}
-        <button
-          onClick={() => {
-            hapticImpact('heavy');
-            onPlay();
-          }}
-          style={{
-            width: '100%',
-            maxWidth: '340px',
-            padding: '15px 24px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #ff006e 0%, #ff4757 100%)',
-            boxShadow: '0 4px 20px rgba(255, 0, 110, 0.35)',
-            fontFamily: 'var(--font-display), sans-serif',
-            fontSize: '17px',
-            fontWeight: 700,
-            letterSpacing: '3px',
-            color: '#fff',
-            cursor: 'pointer',
-            textTransform: 'uppercase',
-          }}
-        >
-          ▶ O'YNASH
-        </button>
+        {/* MARKAZIY BO'SH JOY — logo uchun */}
+        <div style={{ flex: 1 }} />
 
-        {/* XONA YARATISH */}
-        <button
-          onClick={() => {
-            hapticImpact('medium');
-            onCreateRoom();
-          }}
+        {/* TUGMALAR — PIRAMIDA — ASL JOYIDA */}
+        <div
           style={{
-            width: '100%',
-            maxWidth: '270px',
-            padding: '12px 20px',
-            borderRadius: '12px',
-            border: '1.5px solid rgba(0, 180, 216, 0.35)',
-            background: 'rgba(0, 0, 0, 0.3)',
-            fontFamily: 'var(--font-display), sans-serif',
-            fontSize: '14px',
-            fontWeight: 600,
-            letterSpacing: '2px',
-            color: '#00b4d8',
-            cursor: 'pointer',
-            textTransform: 'uppercase',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px',
+            marginBottom: '12px',
           }}
         >
-          + XONA YARATISH
-        </button>
+          <button
+            onClick={() => {
+              hapticImpact('heavy');
+              onPlay();
+            }}
+            style={{
+              width: '100%',
+              maxWidth: '340px',
+              padding: '15px 24px',
+              borderRadius: '14px',
+              border: 'none',
+              background: 'linear-gradient(135deg, #ff006e 0%, #ff4757 100%)',
+              boxShadow: '0 4px 20px rgba(255, 0, 110, 0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
+              fontFamily: 'var(--font-display), sans-serif',
+              fontSize: '17px',
+              fontWeight: 700,
+              letterSpacing: '3px',
+              color: '#fff',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              transition: 'transform 0.15s ease',
+            }}
+            onMouseDown={(e) => ((e.target as HTMLElement).style.transform = 'scale(0.96)')}
+            onMouseUp={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
+          >
+            ▶ O'YNASH
+          </button>
 
-        {/* QO'SHILISH */}
-        <button
-          onClick={() => {
-            hapticImpact('medium');
-            onJoinRoom();
-          }}
-          style={{
-            width: '100%',
-            maxWidth: '210px',
-            padding: '10px 16px',
-            borderRadius: '10px',
-            border: '1.5px solid rgba(46, 213, 115, 0.25)',
-            background: 'rgba(0, 0, 0, 0.3)',
-            fontFamily: 'var(--font-display), sans-serif',
-            fontSize: '13px',
-            fontWeight: 600,
-            letterSpacing: '2px',
-            color: '#2ed573',
-            cursor: 'pointer',
-            textTransform: 'uppercase',
-          }}
-        >
-          🔗 QO'SHILISH
-        </button>
+          <button
+            onClick={() => {
+              hapticImpact('medium');
+              onCreateRoom();
+            }}
+            style={{
+              width: '100%',
+              maxWidth: '270px',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              border: '1.5px solid rgba(0, 180, 216, 0.35)',
+              background: 'rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              fontFamily: 'var(--font-display), sans-serif',
+              fontSize: '14px',
+              fontWeight: 600,
+              letterSpacing: '2px',
+              color: '#00b4d8',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              transition: 'transform 0.15s ease',
+            }}
+            onMouseDown={(e) => ((e.target as HTMLElement).style.transform = 'scale(0.96)')}
+            onMouseUp={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
+          >
+            + XONA YARATISH
+          </button>
+
+          <button
+            onClick={() => {
+              hapticImpact('medium');
+              onJoinRoom();
+            }}
+            style={{
+              width: '100%',
+              maxWidth: '210px',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              border: '1.5px solid rgba(46, 213, 115, 0.25)',
+              background: 'rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              fontFamily: 'var(--font-display), sans-serif',
+              fontSize: '13px',
+              fontWeight: 600,
+              letterSpacing: '2px',
+              color: '#2ed573',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              transition: 'transform 0.15s ease',
+            }}
+            onMouseDown={(e) => ((e.target as HTMLElement).style.transform = 'scale(0.96)')}
+            onMouseUp={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
+            onMouseLeave={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
+          >
+            🔗 QO'SHILISH
+          </button>
+        </div>
       </div>
     </div>
   );
