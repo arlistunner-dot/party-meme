@@ -1,8 +1,7 @@
 import { useAuthStore } from '@/store/authStore';
-import { getRankByRating } from '@/utils/helpers';
 import { formatNumber } from '@/utils/formatters';
-import { RANKS } from '@/config/constants';
-import { hapticImpact } from '@/config/telegram';
+import { hapticImpact, hapticSuccess, hapticError } from '@/config/telegram';
+import { useToast } from '@/components/common/Toast';
 
 interface HomeScreenProps {
   onPlay: () => void;
@@ -13,8 +12,24 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScreenProps) {
   const user = useAuthStore((s) => s.user);
-  const rank = user ? getRankByRating(user.rating) : 'newbie';
-  const rankInfo = RANKS.find((r) => r.id === rank);
+  const claimDailyBonus = useAuthStore((s) => s.claimDailyBonus);
+  const { toast } = useToast();
+
+  const handleDailyBonus = async () => {
+    hapticImpact('medium');
+    const result = await claimDailyBonus();
+    if (result) {
+      hapticSuccess();
+      toast(`+${result.earned} coin olindi!`, 'success');
+    } else {
+      hapticError();
+      toast('Bugun allaqachon oldingiz!', 'error');
+    }
+  };
+
+  const alreadyClaimed = user?.dailyClaimedAt
+    ? new Date(user.dailyClaimedAt).toDateString() === new Date().toDateString()
+    : false;
 
   return (
     <div
@@ -69,7 +84,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px) + 12px)',
         }}
       >
-        {/* ---- TEPADA: Profil + Kunlik bonus ---- */}
+        {/* ---- TEPADA: Balans + Kunlik bonus ---- */}
         <div
           style={{
             paddingTop: 'calc(env(safe-area-inset-top, 0px) + 15px)',
@@ -78,64 +93,15 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             gap: '8px',
           }}
         >
-          {/* Profil bar */}
+          {/* Balans */}
           {user && (
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'flex-end',
               }}
             >
-              {/* Avatar + Ism */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, rgba(155,93,229,0.4), rgba(255,0,110,0.4))',
-                    border: '2px solid rgba(255,255,255,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    color: '#fff',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                  }}
-                >
-                  {user.firstName.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: '#fff',
-                      lineHeight: 1.2,
-                      textShadow: '0 1px 4px rgba(0,0,0,0.5)',
-                    }}
-                  >
-                    {user.firstName}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '10px',
-                      color: 'rgba(255,255,255,0.55)',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.4)',
-                    }}
-                  >
-                    {rankInfo?.nameUz || 'Yangi'} · {user.rating} ⭐
-                  </div>
-                </div>
-              </div>
-
-              {/* Balans */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <div
                   style={{
@@ -189,7 +155,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             </div>
           )}
 
-          {/* Kunlik bonus — tepada, ixcham */}
+          {/* Kunlik bonus */}
           <div
             style={{
               display: 'flex',
@@ -208,7 +174,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               <span
                 style={{
                   fontFamily: 'var(--font-body)',
-                  fontSize: '18px',
+                  fontSize: '14px',
                   color: 'rgba(255,255,255,0.65)',
                 }}
               >
@@ -216,25 +182,29 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               </span>
             </div>
             <button
-              onClick={() => hapticImpact('light')}
+              onClick={handleDailyBonus}
+              disabled={alreadyClaimed}
               style={{
                 padding: '6px 14px',
                 borderRadius: '6px',
                 border: 'none',
-                background: 'rgba(255, 0, 110, 0.2)',
+                background: alreadyClaimed
+                  ? 'rgba(255,255,255,0.05)'
+                  : 'rgba(255, 0, 110, 0.2)',
                 fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#ff006e',
-                cursor: 'pointer',
+                color: alreadyClaimed ? 'rgba(255,255,255,0.25)' : '#ff006e',
+                cursor: alreadyClaimed ? 'default' : 'pointer',
+                transition: 'all 0.2s ease',
               }}
             >
-              OLISH
+              {alreadyClaimed ? 'OLINGAN' : 'OLISH'}
             </button>
           </div>
         </div>
 
-        {/* ---- MARKAZIY BO'SH JOY (logo rasmda bor) ---- */}
+        {/* ---- MARKAZIY BO'SH JOY ---- */}
         <div style={{ flex: 1 }} />
 
         {/* ---- TUGMALAR — PIRAMIDA ---- */}
@@ -247,7 +217,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             marginBottom: '12px',
           }}
         >
-          {/* O'YNASH — eng keng */}
+          {/* O'YNASH */}
           <button
             onClick={() => {
               hapticImpact('heavy');
@@ -277,7 +247,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             ▶ O'YNASH
           </button>
 
-          {/* XONA YARATISH — o'rtacha */}
+          {/* XONA YARATISH */}
           <button
             onClick={() => {
               hapticImpact('medium');
@@ -308,7 +278,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             + XONA YARATISH
           </button>
 
-          {/* XONAGA QO'SHILISH — eng qisqa */}
+          {/* XONAGA QO'SHILISH */}
           <button
             onClick={() => {
               hapticImpact('medium');
