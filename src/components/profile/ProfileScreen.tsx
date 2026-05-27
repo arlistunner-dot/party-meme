@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { getRankByRating } from '@/utils/helpers';
 import { formatNumber } from '@/utils/formatters';
 import { hapticImpact, hapticSuccess, hapticError } from '@/config/telegram';
 import { useToast } from '@/components/common/Toast';
+import type { User } from '@/types/user';
 
 interface ProfileScreenProps {
   onNavigate: (tab: string) => void;
@@ -14,7 +15,9 @@ const EDIT_COST = 500;
 function getEditCount(): number {
   try {
     return parseInt(localStorage.getItem('profile_edit_count') || '0', 10);
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 function incrementEditCount() {
@@ -45,11 +48,15 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
   const [editUsername, setEditUsername] = useState('');
   const [editAvatar, setEditAvatar] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<string | null>(
+    localStorage.getItem('selected_badge') || null
+  );
+  const [showBadgePicker, setShowBadgePicker] = useState(false);
 
   // Telegram dan foydalanuvchi ma'lumotlari
   const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
 
-  // Boshlang'ich ma'lumotlar — Telegram dan
+  // Asosiy ma'lumotlar
   const demoUser = user || {
     id: 1,
     telegramId: tgUser?.id || 123456,
@@ -70,25 +77,41 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
     rank: 'funny' as const,
   };
 
-  // Avatar URL — Telegram dan yoki edit dan
   const avatarSrc = editAvatar || demoUser.avatarUrl || null;
-
   const rank = getRankByRating(demoUser.rating);
   const rankTitle = getRankTitle(rank);
   const editCount = getEditCount();
   const isFirstEdit = editCount === 0;
 
-  // Nishonlar
+  // Nishonlar ro'yxati
   const badges = [
     { id: 'winner', icon: '🏆', name: 'G\'olib', unlocked: demoUser.totalWins >= 10 },
     { id: 'creator', icon: '🎨', name: 'Yaratuvchi', unlocked: demoUser.cardsCreated >= 5 },
     { id: 'social', icon: '❤️', name: 'Ijtimoiy', unlocked: demoUser.totalLikes >= 50 },
     { id: 'veteran', icon: '⭐', name: 'Veteran', unlocked: demoUser.totalMatches >= 100 },
     { id: 'streak', icon: '🔥', name: 'Seriya', unlocked: false },
+    { id: 'collector', icon: '🎴', name: 'Kollektor', unlocked: false },
+    { id: 'legend', icon: '👑', name: 'Afsona', unlocked: false },
+    { id: 'diamond', icon: '💎', name: 'Olmos', unlocked: false },
   ];
   const unlockedBadges = badges.filter((b) => b.unlocked);
+  const activeBadge = selectedBadge
+    ? badges.find((b) => b.id === selectedBadge && b.unlocked)
+    : null;
 
-  // Profil tahrirlash boshlash
+  // Statistika
+  const winRate =
+    demoUser.totalMatches > 0
+      ? Math.round((demoUser.totalWins / demoUser.totalMatches) * 100)
+      : 0;
+
+  const joinDate = new Date(demoUser.createdAt).toLocaleDateString('uz-UZ', {
+    year: 'numeric',
+    month: 'long',
+  });
+
+  // ===================== HANDLERS =====================
+
   const handleEditStart = useCallback(() => {
     hapticImpact('light');
 
@@ -104,7 +127,6 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
     setIsEditing(true);
   }, [demoUser, isFirstEdit, avatarSrc, toast]);
 
-  // Saqlash
   const handleEditSave = useCallback(() => {
     if (!editName.trim()) {
       hapticError();
@@ -112,43 +134,37 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
       return;
     }
 
-    // Coin yechish
-    if (!isFirstEdit) {
-      const newBalance = demoUser.coinBalance - EDIT_COST;
-      const updatedUser = {
-        ...demoUser,
-        firstName: editName.trim(),
-        username: editUsername.trim() || null,
-        avatarUrl: editAvatar,
-        coinBalance: newBalance,
-      };
-      localStorage.setItem('demo_user', JSON.stringify(updatedUser));
-      setUser(updatedUser as any);
-      toast(`-${EDIT_COST} tanga yechildi`, 'success');
-    } else {
-      const updatedUser = {
-        ...demoUser,
-        firstName: editName.trim(),
-        username: editUsername.trim() || null,
-        avatarUrl: editAvatar,
-      };
-      localStorage.setItem('demo_user', JSON.stringify(updatedUser));
-      setUser(updatedUser as any);
-    }
+    const newBalance = isFirstEdit
+      ? demoUser.coinBalance
+      : demoUser.coinBalance - EDIT_COST;
 
+    const updatedUser: User = {
+      ...(demoUser as User),
+      firstName: editName.trim(),
+      username: editUsername.trim() || null,
+      avatarUrl: editAvatar || demoUser.avatarUrl,
+      coinBalance: newBalance,
+    };
+
+    localStorage.setItem('demo_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
     incrementEditCount();
+
     hapticSuccess();
     setIsEditing(false);
-    toast('Profil yangilandi!', 'success');
+    toast(
+      isFirstEdit
+        ? 'Profil yangilandi! (bepul)'
+        : `Profil yangilandi! -${EDIT_COST} tanga`,
+      'success'
+    );
   }, [editName, editUsername, editAvatar, demoUser, isFirstEdit, toast, setUser]);
 
-  // Bekor qilish
   const handleEditCancel = useCallback(() => {
     hapticImpact('light');
     setIsEditing(false);
   }, []);
 
-  // Rasm tanlash
   const handleAvatarChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -160,14 +176,21 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
     []
   );
 
-  const joinDate = new Date(demoUser.createdAt).toLocaleDateString('uz-UZ', {
-    year: 'numeric',
-    month: 'long',
-  });
+  const handleSelectBadge = useCallback(
+    (badgeId: string | null) => {
+      hapticImpact('light');
+      setSelectedBadge(badgeId);
+      if (badgeId) {
+        localStorage.setItem('selected_badge', badgeId);
+      } else {
+        localStorage.removeItem('selected_badge');
+      }
+      setShowBadgePicker(false);
+    },
+    []
+  );
 
-  const winRate = demoUser.totalMatches > 0
-    ? Math.round((demoUser.totalWins / demoUser.totalMatches) * 100)
-    : 0;
+  // ===================== RENDER =====================
 
   return (
     <div
@@ -179,7 +202,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
         overflow: 'hidden',
       }}
     >
-      {/* HEADER */}
+      {/* ============ HEADER ============ */}
       <div
         style={{
           display: 'flex',
@@ -187,10 +210,14 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           justifyContent: 'space-between',
           padding: '12px 16px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+          flexShrink: 0,
         }}
       >
         <button
-          onClick={() => onNavigate('home')}
+          onClick={() => {
+            hapticImpact('light');
+            onNavigate('home');
+          }}
           style={{
             width: '34px',
             height: '34px',
@@ -241,7 +268,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
         </button>
       </div>
 
-      {/* ASOSIY KONTENT — scroll yo'q */}
+      {/* ============ ASOSIY KONTENT ============ */}
       <div
         style={{
           flex: 1,
@@ -249,21 +276,22 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px) + 8px)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
+          gap: '10px',
           overflow: 'hidden',
         }}
       >
-        {/* PROFIL KARTASI */}
+        {/* ======== PROFIL KARTASI ======== */}
         <div
           style={{
-            padding: '20px 16px',
+            padding: '18px 16px',
             borderRadius: '20px',
-            background: 'linear-gradient(135deg, rgba(155,93,229,0.08), rgba(255,0,110,0.06))',
+            background:
+              'linear-gradient(135deg, rgba(155,93,229,0.08), rgba(255,0,110,0.06))',
             border: '1px solid rgba(255,255,255,0.06)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '10px',
+            gap: '8px',
             position: 'relative',
             flexShrink: 0,
           }}
@@ -286,67 +314,71 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                 justifyContent: 'center',
                 cursor: 'pointer',
                 fontSize: '12px',
+                zIndex: 10,
               }}
             >
               ✏️
             </button>
           )}
 
-                    {/* NISHONLAR — bosh kiyimdek, rasm tepasida qiyshiq */}
-          {unlockedBadges.length > 0 && !isEditing && (
-            <div
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'center',
-                gap: '0px',
-                width: '90px',
-                height: '30px',
-                marginBottom: '-14px',
-                zIndex: 3,
-              }}
-            >
-              {unlockedBadges.map((badge, i) => {
-                const offsets = [
-                  { left: '20px', rotate: '-18deg' },
-                  { left: '32px', rotate: '5deg' },
-                  { left: '44px', rotate: '22deg' },
-                  { left: '14px', rotate: '-28deg' },
-                  { left: '52px', rotate: '32deg' },
-                ];
-                const pos = offsets[i % offsets.length];
-                return (
-                  <div
-                    key={badge.id}
-                    style={{
-                      position: 'absolute',
-                      bottom: '0',
-                      left: pos.left,
-                      width: '26px',
-                      height: '26px',
-                      borderRadius: '50%',
-                      background: 'rgba(0,0,0,0.5)',
-                      border: '2px solid rgba(255,215,0,0.5)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '13px',
-                      boxShadow: '0 2px 8px rgba(255,215,0,0.3)',
-                      transform: `rotate(${pos.rotate})`,
-                    }}
-                    title={badge.name}
-                  >
-                    {badge.icon}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* === AVATAR + NISHON wrapper === */}
+          <div
+            style={{
+              position: 'relative',
+              width: '72px',
+              height: '72px',
+            }}
+          >
+            {/* TANLANGAN NISHON — bosh kiyimdek, rasm yonida qiyshiq */}
+            {activeBadge && !isEditing && (
+              <div
+                onClick={() => setShowBadgePicker(true)}
+                style={{
+                  position: 'absolute',
+                  top: '-10px',
+                  right: '-18px',
+                  fontSize: '22px',
+                  transform: 'rotate(-25deg)',
+                  filter: 'drop-shadow(0 2px 6px rgba(255,215,0,0.5))',
+                  zIndex: 5,
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                }}
+                title={activeBadge.name}
+              >
+                {activeBadge.icon}
+              </div>
+            )}
 
+            {/* Nishon tanlash tugmasi — agar nishon tanlanmagan bo'lsa */}
+            {!activeBadge && !isEditing && unlockedBadges.length > 0 && (
+              <button
+                onClick={() => setShowBadgePicker(true)}
+                style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '-12px',
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: 'rgba(255,215,0,0.12)',
+                  border: '1px dashed rgba(255,215,0,0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                  color: 'rgba(255,215,0,0.6)',
+                  zIndex: 5,
+                  padding: 0,
+                }}
+                title="Nishon tanlash"
+              >
+                +
+              </button>
+            )}
 
-          {/* Avatar */}
-          <div style={{ position: 'relative' }}>
+            {/* Avatar */}
             <div
               style={{
                 width: '72px',
@@ -369,7 +401,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
               {!avatarSrc && demoUser.firstName.charAt(0).toUpperCase()}
             </div>
 
-            {/* Avatar tahrirlash */}
+            {/* Avatar tahrirlash — faqat edit rejimda */}
             {isEditing && (
               <label
                 style={{
@@ -386,6 +418,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                   justifyContent: 'center',
                   cursor: 'pointer',
                   fontSize: '11px',
+                  zIndex: 10,
                 }}
               >
                 📷
@@ -399,7 +432,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
             )}
           </div>
 
-          {/* Ism / Username / Status */}
+          {/* === ISM / USERNAME / STATUS === */}
           {isEditing ? (
             <div
               style={{
@@ -425,6 +458,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                   fontSize: '15px',
                   fontWeight: 700,
                   color: '#fff',
+                  outline: 'none',
                   boxSizing: 'border-box',
                 }}
               />
@@ -442,6 +476,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                   fontFamily: 'var(--font-body)',
                   fontSize: '12px',
                   color: 'rgba(255,255,255,0.7)',
+                  outline: 'none',
                   boxSizing: 'border-box',
                 }}
               />
@@ -455,13 +490,13 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                     border: 'none',
                     background: 'linear-gradient(135deg, #ff006e, #ff4757)',
                     fontFamily: 'var(--font-display)',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 700,
                     color: '#fff',
                     cursor: 'pointer',
                   }}
                 >
-                  {isFirstEdit ? 'SAQLASH (BEPUL)' : `SAQLASH (-${EDIT_COST} 🪙)`}
+                  {isFirstEdit ? '✓ BEPUL' : `✓ -${EDIT_COST} 🪙`}
                 </button>
                 <button
                   onClick={handleEditCancel}
@@ -472,7 +507,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                     border: '1px solid rgba(255,255,255,0.1)',
                     background: 'transparent',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontWeight: 600,
                     color: 'rgba(255,255,255,0.4)',
                     cursor: 'pointer',
@@ -507,7 +542,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                   @{demoUser.username}
                 </div>
               )}
-              {/* Status — avtomatik */}
+              {/* Status — avtomatik, o'zgartrish mumkin emas */}
               <div
                 style={{
                   fontFamily: 'var(--font-body)',
@@ -527,7 +562,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
             </div>
           )}
 
-          {/* A'zo bo'lgan sana */}
+          {/* A'zo sana */}
           <div
             style={{
               fontFamily: 'var(--font-body)',
@@ -539,7 +574,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           </div>
         </div>
 
-        {/* BALANS + STATISTIKA — bitta qator */}
+        {/* ======== BALANS ======== */}
         <div
           style={{
             display: 'grid',
@@ -549,27 +584,45 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           }}
         >
           {[
-            { icon: '⭐', value: formatNumber(demoUser.rating), label: 'REYTING', color: '#fff' },
-            { icon: '🪙', value: formatNumber(demoUser.coinBalance), label: 'TANGA', color: '#ffd700' },
-            { icon: '💎', value: String(demoUser.starBalance), label: 'STARS', color: '#00b4d8' },
+            {
+              icon: '⭐',
+              value: formatNumber(demoUser.rating),
+              label: 'REYTING',
+              color: '#fff',
+            },
+            {
+              icon: '🪙',
+              value: formatNumber(demoUser.coinBalance),
+              label: 'TANGA',
+              color: '#ffd700',
+            },
+            {
+              icon: '💎',
+              value: String(demoUser.starBalance),
+              label: 'STARS',
+              color: '#00b4d8',
+            },
           ].map((item) => (
             <div
               key={item.label}
               style={{
-                padding: '10px 6px',
+                padding: '8px 6px',
                 borderRadius: '12px',
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid rgba(255,255,255,0.05)',
                 textAlign: 'center',
               }}
             >
-              <div style={{ fontSize: '14px', marginBottom: '2px' }}>{item.icon}</div>
+              <div style={{ fontSize: '14px', marginBottom: '2px' }}>
+                {item.icon}
+              </div>
               <div
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontSize: '16px',
                   fontWeight: 700,
                   color: item.color,
+                  lineHeight: 1.2,
                 }}
               >
                 {item.value}
@@ -588,7 +641,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           ))}
         </div>
 
-        {/* STATISTIKA — ixcham */}
+        {/* ======== STATISTIKA ======== */}
         <div
           style={{
             display: 'grid',
@@ -598,10 +651,10 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           }}
         >
           {[
-            { value: String(demoUser.totalMatches), label: 'O\'yin' },
-            { value: String(demoUser.totalWins), label: 'Yutuq' },
-            { value: `${winRate}%`, label: 'Foiz' },
-            { value: String(demoUser.cardsCreated), label: 'Karta' },
+            { value: String(demoUser.totalMatches), label: 'O\'yin', icon: '🎮' },
+            { value: String(demoUser.totalWins), label: 'Yutuq', icon: '🏅' },
+            { value: `${winRate}%`, label: 'Foiz', icon: '📊' },
+            { value: String(demoUser.cardsCreated), label: 'Karta', icon: '🎴' },
           ].map((item) => (
             <div
               key={item.label}
@@ -613,12 +666,16 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                 textAlign: 'center',
               }}
             >
+              <div style={{ fontSize: '12px', marginBottom: '2px' }}>
+                {item.icon}
+              </div>
               <div
                 style={{
                   fontFamily: 'var(--font-display)',
                   fontSize: '14px',
                   fontWeight: 700,
                   color: '#fff',
+                  lineHeight: 1.2,
                 }}
               >
                 {item.value}
@@ -636,38 +693,73 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           ))}
         </div>
 
-        {/* NISHONLAR — to'liq ro'yxat */}
+        {/* ======== NISHONLAR — to'liq ro'yxat ======== */}
         <div style={{ flexShrink: 0 }}>
-          <h3
+          <div
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '13px',
-              fontWeight: 700,
-              color: 'rgba(255,255,255,0.5)',
-              margin: '0 0 8px',
-              letterSpacing: '1px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '8px',
             }}
           >
-            🏅 NISHONLAR
-          </h3>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {badges.map((badge) => (
-              <div
-                key={badge.id}
+            <h3
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '13px',
+                fontWeight: 700,
+                color: 'rgba(255,255,255,0.5)',
+                margin: 0,
+                letterSpacing: '1px',
+              }}
+            >
+              🏅 NISHONLAR
+            </h3>
+            {unlockedBadges.length > 0 && (
+              <span
                 style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  background: badge.unlocked
-                    ? 'rgba(255,215,0,0.08)'
-                    : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${badge.unlocked ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.04)'}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  opacity: badge.unlocked ? 1 : 0.3,
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '10px',
+                  color: 'rgba(255,255,255,0.3)',
                 }}
               >
-                <span style={{ fontSize: '13px' }}>{badge.icon}</span>
+                {unlockedBadges.length}/{badges.length} ochildi
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {badges.map((badge) => (
+              <button
+                key={badge.id}
+                onClick={() => {
+                  if (badge.unlocked) {
+                    hapticImpact('light');
+                    setShowBadgePicker(true);
+                  }
+                }}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: '8px',
+                  background: badge.unlocked
+                    ? selectedBadge === badge.id
+                      ? 'rgba(255,215,0,0.15)'
+                      : 'rgba(255,215,0,0.06)'
+                    : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${
+                    badge.unlocked
+                      ? selectedBadge === badge.id
+                        ? 'rgba(255,215,0,0.4)'
+                        : 'rgba(255,215,0,0.15)'
+                      : 'rgba(255,255,255,0.04)'
+                  }`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  opacity: badge.unlocked ? 1 : 0.3,
+                  cursor: badge.unlocked ? 'pointer' : 'default',
+                }}
+              >
+                <span style={{ fontSize: '12px' }}>{badge.icon}</span>
                 <span
                   style={{
                     fontFamily: 'var(--font-body)',
@@ -678,13 +770,208 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                 >
                   {badge.name}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ======== SOZLAMALAR MODAL — ekran markazida ======== */}
+      {/* ============ NISHON TANLASH MODAL ============ */}
+      {showBadgePicker && (
+        <div
+          onClick={() => setShowBadgePicker(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '300px',
+              borderRadius: '20px',
+              background: '#1a1a2e',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              overflow: 'hidden',
+              animation: 'fadeUp 0.25s ease forwards',
+            }}
+          >
+            {/* Modal header */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 18px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: '#fff',
+                }}
+              >
+                🏅 Bosh kiyim tanlash
+              </span>
+              <button
+                onClick={() => setShowBadgePicker(false)}
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '8px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: 'rgba(255,255,255,0.5)',
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Nishonlar ro'yxati */}
+            <div style={{ padding: '8px 10px' }}>
+              {/* Nishonsiz */}
+              <button
+                onClick={() => handleSelectBadge(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: !selectedBadge
+                    ? 'rgba(255,0,110,0.1)'
+                    : 'transparent',
+                  border: !selectedBadge
+                    ? '1px solid rgba(255,0,110,0.2)'
+                    : '1px solid transparent',
+                  cursor: 'pointer',
+                  width: '100%',
+                  marginBottom: '4px',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '16px',
+                    width: '28px',
+                    textAlign: 'center',
+                  }}
+                >
+                  🚫
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '13px',
+                    color: '#fff',
+                    flex: 1,
+                  }}
+                >
+                  Nishonsiz
+                </span>
+                {!selectedBadge && (
+                  <span style={{ fontSize: '13px', color: '#ff006e' }}>✓</span>
+                )}
+              </button>
+
+              {/* Ochilgan nishonlar */}
+              {unlockedBadges.map((badge) => (
+                <button
+                  key={badge.id}
+                  onClick={() => handleSelectBadge(badge.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    background:
+                      selectedBadge === badge.id
+                        ? 'rgba(255,215,0,0.1)'
+                        : 'transparent',
+                    border:
+                      selectedBadge === badge.id
+                        ? '1px solid rgba(255,215,0,0.2)'
+                        : '1px solid transparent',
+                    cursor: 'pointer',
+                    width: '100%',
+                    marginBottom: '4px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '18px',
+                      width: '28px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {badge.icon}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '13px',
+                      color: '#fff',
+                      flex: 1,
+                      textAlign: 'left',
+                    }}
+                  >
+                    {badge.name}
+                  </span>
+                  {selectedBadge === badge.id && (
+                    <span style={{ fontSize: '13px', color: '#ffd700' }}>
+                      ✓
+                    </span>
+                  )}
+                </button>
+              ))}
+
+              {/* Yopish tugmasi */}
+              <button
+                onClick={() => setShowBadgePicker(false)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.04)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.4)',
+                  cursor: 'pointer',
+                  marginTop: '4px',
+                }}
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============ SOZLAMALAR MODAL ============ */}
       {showSettings && (
         <div
           onClick={() => setShowSettings(false)}
@@ -694,9 +981,9 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
             left: 0,
             width: '100%',
             height: '100%',
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            background: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             zIndex: 100,
             display: 'flex',
             alignItems: 'center',
@@ -715,7 +1002,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
               border: '1px solid rgba(255,255,255,0.08)',
               boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
               overflowY: 'auto',
-              animation: 'fadeUp 0.3s ease forwards',
+              animation: 'fadeUp 0.25s ease forwards',
             }}
           >
             {/* Modal header */}
@@ -726,6 +1013,10 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                 justifyContent: 'space-between',
                 padding: '16px 20px',
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
+                position: 'sticky',
+                top: 0,
+                background: '#1a1a2e',
+                zIndex: 1,
               }}
             >
               <span
@@ -752,6 +1043,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                   cursor: 'pointer',
                   fontSize: '14px',
                   color: 'rgba(255,255,255,0.5)',
+                  padding: 0,
                 }}
               >
                 ✕
@@ -759,7 +1051,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
             </div>
 
             {/* Sozlamalar ro'yxati */}
-            <div style={{ padding: '8px 0' }}>
+            <div style={{ padding: '4px 0' }}>
               {[
                 { icon: '🔔', label: 'Bildirishnomalar', value: 'Yoqilgan' },
                 { icon: '🔊', label: 'Ovoz effektlari', value: 'Yoqilgan' },
@@ -767,12 +1059,23 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                 { icon: '🌐', label: 'Til', value: 'O\'zbek' },
                 { icon: '❓', label: 'Yordam', value: '' },
                 { icon: '📜', label: 'Foydalanish shartlari', value: '' },
+                {
+                  icon: '🚪',
+                  label: 'Chiqish',
+                  value: '',
+                  danger: true,
+                },
               ].map((item) => (
                 <button
                   key={item.label}
                   onClick={() => {
                     hapticImpact('light');
-                    toast(`${item.label} — tez orada`, 'success');
+                    if (item.danger) {
+                      toast('Sessiya tugatildi', 'success');
+                      setShowSettings(false);
+                    } else {
+                      toast(`${item.label} — tez orada`, 'success');
+                    }
                   }}
                   style={{
                     display: 'flex',
@@ -786,14 +1089,14 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                     textAlign: 'left',
                     transition: 'background 0.15s ease',
                   }}
-                  onMouseEnter={(e) => {
-                    (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.03)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.target as HTMLElement).style.background = 'transparent';
-                  }}
                 >
-                  <span style={{ fontSize: '16px', width: '24px', textAlign: 'center' }}>
+                  <span
+                    style={{
+                      fontSize: '16px',
+                      width: '24px',
+                      textAlign: 'center',
+                    }}
+                  >
                     {item.icon}
                   </span>
                   <span
@@ -802,7 +1105,7 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                       fontFamily: 'var(--font-body)',
                       fontSize: '14px',
                       fontWeight: 500,
-                      color: '#fff',
+                      color: (item as any).danger ? '#ff4757' : '#fff',
                     }}
                   >
                     {item.label}
