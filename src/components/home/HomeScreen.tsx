@@ -56,13 +56,10 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
   const videosLeft = MAX_VIDEOS - videoData.used;
   const showDailyBonus = videosLeft > 0;
 
-  // Telegram WebApp expand
   useEffect(() => {
     try {
       const tg = window.Telegram?.WebApp;
-      if (tg) {
-        tg.expand();
-      }
+      if (tg) tg.expand();
     } catch {}
   }, []);
 
@@ -107,7 +104,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         backgroundColor: '#0a0a0f',
       }}
     >
-      {/* FON RASMI */}
+      {/* FON */}
       <div
         style={{
           position: 'fixed',
@@ -124,7 +121,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       />
 
-      {/* Qorong'u overlay */}
+      {/* Overlay */}
       <div
         style={{
           position: 'fixed',
@@ -138,22 +135,25 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       />
 
-      {/* KONTENT */}
+      {/* KONTENT — spacer yo'q, hammasi birgalikda */}
       <div
         style={{
           position: 'relative',
           zIndex: 2,
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
           flex: 1,
-          padding: '16px 20px',
+          padding: '20px',
+          gap: '10px',
         }}
       >
-        {/* KUNLIK BONUS — eng yuqorida, doimo ko'rinadigan */}
+        {/* KUNLIK BONUS — tugmalar USTIDA */}
         {showDailyBonus && (
           <div
             style={{
-              marginBottom: '20px',
+              width: '100%',
+              maxWidth: '340px',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
@@ -164,7 +164,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               boxShadow: '0 4px 20px rgba(255, 0, 110, 0.2)',
             }}
           >
-            <span style={{ fontSize: '22px', lineHeight: 1 }}>🎁</span>
+            <span style={{ fontSize: '22px' }}>🎁</span>
 
             <div style={{ flex: 1 }}>
               <div
@@ -172,7 +172,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
                   fontFamily: 'var(--font-display), sans-serif',
                   fontSize: '14px',
                   fontWeight: 700,
-                  color: '#ffffff',
+                  color: '#fff',
                 }}
               >
                 Kunlik bonus
@@ -189,7 +189,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
               {Array.from({ length: MAX_VIDEOS }).map((_, i) => (
                 <div
                   key={i}
@@ -211,15 +211,12 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
                 padding: '8px 14px',
                 borderRadius: '8px',
                 border: 'none',
-                background: isWatching
-                  ? 'rgba(255,255,255,0.1)'
-                  : '#ff006e',
+                background: isWatching ? 'rgba(255,255,255,0.1)' : '#ff006e',
                 fontFamily: 'var(--font-display), sans-serif',
                 fontSize: '12px',
                 fontWeight: 700,
-                color: '#ffffff',
+                color: '#fff',
                 cursor: isWatching ? 'default' : 'pointer',
-                whiteSpace: 'nowrap',
               }}
             >
               {isWatching ? '...' : `▶ ${videosLeft}`}
@@ -227,91 +224,81 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           </div>
         )}
 
-        {/* MARKAZIY BO'SH JOY */}
-        <div style={{ flex: 1 }} />
-
-        {/* TUGMALAR */}
-        <div
+        {/* O'YNASH */}
+        <button
+          onClick={() => {
+            hapticImpact('heavy');
+            onPlay();
+          }}
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '10px',
+            width: '100%',
+            maxWidth: '340px',
+            padding: '15px 24px',
+            borderRadius: '14px',
+            border: 'none',
+            background: 'linear-gradient(135deg, #ff006e 0%, #ff4757 100%)',
+            boxShadow: '0 4px 20px rgba(255, 0, 110, 0.35)',
+            fontFamily: 'var(--font-display), sans-serif',
+            fontSize: '17px',
+            fontWeight: 700,
+            letterSpacing: '3px',
+            color: '#fff',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
           }}
         >
-          <button
-            onClick={() => {
-              hapticImpact('heavy');
-              onPlay();
-            }}
-            style={{
-              width: '100%',
-              maxWidth: '340px',
-              padding: '15px 24px',
-              borderRadius: '14px',
-              border: 'none',
-              background: 'linear-gradient(135deg, #ff006e 0%, #ff4757 100%)',
-              boxShadow: '0 4px 20px rgba(255, 0, 110, 0.35)',
-              fontFamily: 'var(--font-display), sans-serif',
-              fontSize: '17px',
-              fontWeight: 700,
-              letterSpacing: '3px',
-              color: '#fff',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-            }}
-          >
-            ▶ O'YNASH
-          </button>
+          ▶ O'YNASH
+        </button>
 
-          <button
-            onClick={() => {
-              hapticImpact('medium');
-              onCreateRoom();
-            }}
-            style={{
-              width: '100%',
-              maxWidth: '270px',
-              padding: '12px 20px',
-              borderRadius: '12px',
-              border: '1.5px solid rgba(0, 180, 216, 0.35)',
-              background: 'rgba(0, 0, 0, 0.3)',
-              fontFamily: 'var(--font-display), sans-serif',
-              fontSize: '14px',
-              fontWeight: 600,
-              letterSpacing: '2px',
-              color: '#00b4d8',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-            }}
-          >
-            + XONA YARATISH
-          </button>
+        {/* XONA YARATISH */}
+        <button
+          onClick={() => {
+            hapticImpact('medium');
+            onCreateRoom();
+          }}
+          style={{
+            width: '100%',
+            maxWidth: '270px',
+            padding: '12px 20px',
+            borderRadius: '12px',
+            border: '1.5px solid rgba(0, 180, 216, 0.35)',
+            background: 'rgba(0, 0, 0, 0.3)',
+            fontFamily: 'var(--font-display), sans-serif',
+            fontSize: '14px',
+            fontWeight: 600,
+            letterSpacing: '2px',
+            color: '#00b4d8',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+          }}
+        >
+          + XONA YARATISH
+        </button>
 
-          <button
-            onClick={() => {
-              hapticImpact('medium');
-              onJoinRoom();
-            }}
-            style={{
-              width: '100%',
-              maxWidth: '210px',
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border: '1.5px solid rgba(46, 213, 115, 0.25)',
-              background: 'rgba(0, 0, 0, 0.3)',
-              fontFamily: 'var(--font-display), sans-serif',
-              fontSize: '13px',
-              fontWeight: 600,
-              letterSpacing: '2px',
-              color: '#2ed573',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-            }}
-          >
-            🔗 QO'SHILISH
-          </button>
-        </div>
+        {/* QO'SHILISH */}
+        <button
+          onClick={() => {
+            hapticImpact('medium');
+            onJoinRoom();
+          }}
+          style={{
+            width: '100%',
+            maxWidth: '210px',
+            padding: '10px 16px',
+            borderRadius: '10px',
+            border: '1.5px solid rgba(46, 213, 115, 0.25)',
+            background: 'rgba(0, 0, 0, 0.3)',
+            fontFamily: 'var(--font-display), sans-serif',
+            fontSize: '13px',
+            fontWeight: 600,
+            letterSpacing: '2px',
+            color: '#2ed573',
+            cursor: 'pointer',
+            textTransform: 'uppercase',
+          }}
+        >
+          🔗 QO'SHILISH
+        </button>
       </div>
     </div>
   );
