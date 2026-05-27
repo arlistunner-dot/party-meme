@@ -35,7 +35,7 @@ function saveVideoCount(used: number) {
 function showRewardedVideo(): Promise<boolean> {
   return new Promise((resolve) => {
     const tg = window.Telegram?.WebApp;
-    // @ts-expect-error — Telegram rewarded ads API
+    // @ts-expect-error
     const ads = tg?.Ads;
     if (ads && typeof ads.showRewardedVideo === 'function') {
       ads.showRewardedVideo((result: { rewarded?: boolean }) => {
@@ -119,7 +119,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         overflow: 'hidden',
       }}
     >
-      {/* ======== FON RASMI ======== */}
+      {/* FON RASMI */}
       <div
         style={{
           position: 'fixed',
@@ -150,7 +150,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       />
 
-      {/* ======== KONTENT ======== */}
+      {/* KONTENT */}
       <div
         style={{
           position: 'relative',
@@ -162,10 +162,10 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px) + 12px)',
         }}
       >
-        {/* ---- TEPADA BO'SH JOY ---- */}
+        {/* TEPADA BO'SH JOY */}
         <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 15px)' }} />
 
-        {/* ---- BONUS EVENTLAR — ixcham satr ---- */}
+        {/* BONUS EVENTLAR */}
         {bonusEvents.map((event, index) => (
           <div
             key={(event.id as number) || index}
@@ -205,7 +205,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           </div>
         ))}
 
-              {/* ---- KUNLIK BONUS — ixcham bitta satr ---- */}
+        {/* KUNLIK BONUS — ixcham satr */}
         {showDailyBonus && (
           <div
             style={{
@@ -223,10 +223,8 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               animation: 'fadeUp 0.4s ease forwards',
             }}
           >
-            {/* Ikonka */}
             <span style={{ fontSize: '20px' }}>🎁</span>
 
-            {/* Matn */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
@@ -251,7 +249,6 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               </div>
             </div>
 
-            {/* Dotlar */}
             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               {Array.from({ length: MAX_VIDEOS }).map((_, i) => (
                 <div
@@ -274,7 +271,6 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               ))}
             </div>
 
-            {/* Video tugmasi */}
             <button
               onClick={handleWatchVideo}
               disabled={isWatching}
@@ -303,55 +299,10 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           </div>
         )}
 
-
-            {/* Dotlar — qolgan limit */}
-            <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
-              {Array.from({ length: MAX_VIDEOS }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background:
-                      i < videoData.used
-                        ? '#ff006e'
-                        : 'rgba(255,255,255,0.15)',
-                    transition: 'all 0.3s ease',
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Video tugmasi */}
-            <button
-              onClick={handleWatchVideo}
-              disabled={isWatching}
-              style={{
-                padding: '5px 10px',
-                borderRadius: '6px',
-                border: 'none',
-                background: isWatching
-                  ? 'rgba(255,255,255,0.05)'
-                  : 'rgba(255, 0, 110, 0.2)',
-                fontFamily: 'var(--font-body)',
-                fontSize: '10px',
-                fontWeight: 600,
-                color: isWatching ? 'rgba(255,255,255,0.3)' : '#ff006e',
-                cursor: isWatching ? 'default' : 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {isWatching ? '...' : `${videosLeft} ta`}
-            </button>
-          </div>
-        )}
-
-        {/* ---- MARKAZIY BO'SH JOY — logo uchun ---- */}
+        {/* MARKAZIY BO'SH JOY */}
         <div style={{ flex: 1 }} />
 
-        {/* ---- TUGMALAR — PIRAMIDA ---- */}
+        {/* TUGMALAR — PIRAMIDA */}
         <div
           style={{
             display: 'flex',
@@ -361,7 +312,6 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             marginBottom: '12px',
           }}
         >
-          {/* O'YNASH */}
           <button
             onClick={() => {
               hapticImpact('heavy');
@@ -391,7 +341,6 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             ▶ O'YNASH
           </button>
 
-          {/* XONA YARATISH */}
           <button
             onClick={() => {
               hapticImpact('medium');
@@ -422,7 +371,6 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
             + XONA YARATISH
           </button>
 
-          {/* XONAGA QO'SHILISH */}
           <button
             onClick={() => {
               hapticImpact('medium');
