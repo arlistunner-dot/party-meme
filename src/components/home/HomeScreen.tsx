@@ -114,7 +114,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        height: '100dvh',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -126,7 +126,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           top: 0,
           left: 0,
           width: '100%',
-          height: '100%',
+          height: '100dvh',
           zIndex: 0,
           backgroundImage: 'url(/assets/home-bg.png)',
           backgroundSize: 'cover',
