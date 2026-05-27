@@ -292,37 +292,58 @@ export default function ProfileScreen({ onNavigate }: ProfileScreenProps) {
             </button>
           )}
 
-          {/* NISHONLAR — avatar tepasida */}
+                    {/* NISHONLAR — bosh kiyimdek, rasm tepasida qiyshiq */}
           {unlockedBadges.length > 0 && !isEditing && (
             <div
               style={{
+                position: 'relative',
                 display: 'flex',
-                gap: '4px',
-                marginBottom: '-4px',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                gap: '0px',
+                width: '90px',
+                height: '30px',
+                marginBottom: '-14px',
+                zIndex: 3,
               }}
             >
-              {unlockedBadges.map((badge) => (
-                <div
-                  key={badge.id}
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.4)',
-                    border: '2px solid rgba(255,215,0,0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    boxShadow: '0 2px 8px rgba(255,215,0,0.2)',
-                  }}
-                  title={badge.name}
-                >
-                  {badge.icon}
-                </div>
-              ))}
+              {unlockedBadges.map((badge, i) => {
+                const offsets = [
+                  { left: '20px', rotate: '-18deg' },
+                  { left: '32px', rotate: '5deg' },
+                  { left: '44px', rotate: '22deg' },
+                  { left: '14px', rotate: '-28deg' },
+                  { left: '52px', rotate: '32deg' },
+                ];
+                const pos = offsets[i % offsets.length];
+                return (
+                  <div
+                    key={badge.id}
+                    style={{
+                      position: 'absolute',
+                      bottom: '0',
+                      left: pos.left,
+                      width: '26px',
+                      height: '26px',
+                      borderRadius: '50%',
+                      background: 'rgba(0,0,0,0.5)',
+                      border: '2px solid rgba(255,215,0,0.5)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '13px',
+                      boxShadow: '0 2px 8px rgba(255,215,0,0.3)',
+                      transform: `rotate(${pos.rotate})`,
+                    }}
+                    title={badge.name}
+                  >
+                    {badge.icon}
+                  </div>
+                );
+              })}
             </div>
           )}
+
 
           {/* Avatar */}
           <div style={{ position: 'relative' }}>
