@@ -205,38 +205,104 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           </div>
         ))}
 
-        {/* ---- KUNLIK BONUS — ixcham bitta satr ---- */}
+              {/* ---- KUNLIK BONUS — ixcham bitta satr ---- */}
         {showDailyBonus && (
           <div
             style={{
-              marginTop: bonusEvents.length > 0 ? '4px' : '8px',
+              marginTop: '16px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: 'rgba(0, 0, 0, 0.35)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 0, 110, 0.08)',
-              animation: 'fadeUp 0.3s ease forwards',
+              gap: '10px',
+              padding: '12px 16px',
+              borderRadius: '12px',
+              background: 'rgba(255, 0, 110, 0.08)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 0, 110, 0.15)',
+              boxShadow: '0 2px 12px rgba(255, 0, 110, 0.1)',
+              animation: 'fadeUp 0.4s ease forwards',
             }}
           >
             {/* Ikonka */}
-            <span style={{ fontSize: '16px' }}>🎁</span>
+            <span style={{ fontSize: '20px' }}>🎁</span>
 
-            {/* Sarlavha */}
-            <div style={{ flex: 1 }}>
-              <span
+            {/* Matn */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
                 style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: 'rgba(255,255,255,0.7)',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#fff',
+                  lineHeight: 1.3,
                 }}
               >
                 Kunlik bonus
-              </span>
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '10px',
+                  color: 'rgba(255,255,255,0.4)',
+                  marginTop: '2px',
+                }}
+              >
+                {videosLeft} ta video qoldi
+              </div>
             </div>
+
+            {/* Dotlar */}
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              {Array.from({ length: MAX_VIDEOS }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    background:
+                      i < videoData.used
+                        ? '#ff006e'
+                        : 'rgba(255,255,255,0.15)',
+                    boxShadow:
+                      i < videoData.used
+                        ? '0 0 6px rgba(255,0,110,0.4)'
+                        : 'none',
+                    transition: 'all 0.3s ease',
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Video tugmasi */}
+            <button
+              onClick={handleWatchVideo}
+              disabled={isWatching}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                background: isWatching
+                  ? 'rgba(255,255,255,0.05)'
+                  : 'linear-gradient(135deg, #ff006e, #ff4757)',
+                fontFamily: 'var(--font-display)',
+                fontSize: '11px',
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+                color: isWatching ? 'rgba(255,255,255,0.3)' : '#fff',
+                cursor: isWatching ? 'default' : 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
+                boxShadow: isWatching
+                  ? 'none'
+                  : '0 2px 10px rgba(255, 0, 110, 0.3)',
+              }}
+            >
+              {isWatching ? '...' : `▶ ${videosLeft}`}
+            </button>
+          </div>
+        )}
+
 
             {/* Dotlar — qolgan limit */}
             <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
