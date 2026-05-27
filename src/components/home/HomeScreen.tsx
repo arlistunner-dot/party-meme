@@ -12,7 +12,6 @@ interface HomeScreenProps {
   onNavigate: (tab: string) => void;
 }
 
-// Video limit — 24 soat ichida 5 ta
 const MAX_VIDEOS = 5;
 
 function getVideoCount(): { used: number; date: string } {
@@ -20,10 +19,7 @@ function getVideoCount(): { used: number; date: string } {
     const saved = localStorage.getItem('video_bonus_data');
     if (saved) {
       const data = JSON.parse(saved);
-      const today = new Date().toDateString();
-      if (data.date === today) {
-        return data;
-      }
+      if (data.date === new Date().toDateString()) return data;
     }
   } catch {}
   return { used: 0, date: new Date().toDateString() };
@@ -36,20 +32,16 @@ function saveVideoCount(used: number) {
   );
 }
 
-// Telegram rewarded video ochish
 function showRewardedVideo(): Promise<boolean> {
   return new Promise((resolve) => {
     const tg = window.Telegram?.WebApp;
     // @ts-expect-error — Telegram rewarded ads API
     const ads = tg?.Ads;
-
     if (ads && typeof ads.showRewardedVideo === 'function') {
       ads.showRewardedVideo((result: { rewarded?: boolean }) => {
         resolve(!!result?.rewarded);
       });
     } else {
-      // Demo rejim — 2 soniya kutib true qaytarish
-      console.log('[Ads] Telegram ads mavjud emas — demo rejim');
       setTimeout(() => resolve(true), 2000);
     }
   });
@@ -67,56 +59,42 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
   const videosLeft = MAX_VIDEOS - videoData.used;
   const showDailyBonus = videosLeft > 0;
 
-  // Bonus eventlarni yuklash
   useEffect(() => {
     async function loadEvents() {
       try {
         const events = (await apiRequest('/bonus-events')) as Record<string, unknown>[];
         if (Array.isArray(events)) {
-          setBonusEvents(events.filter((e: Record<string, unknown>) => e.active));
+          setBonusEvents(events.filter((e) => e.active));
         }
-      } catch {
-        // API yo'q bo'lsa — e'tiborsiz
-      }
+      } catch {}
     }
     loadEvents();
   }, []);
 
-  // Har soniyada video ma'lumotini yangilash
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVideoData(getVideoCount());
-    }, 1000);
+    const interval = setInterval(() => setVideoData(getVideoCount()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Video ko'rish va bonus olish
   const handleWatchVideo = useCallback(async () => {
     if (isWatching) return;
     setIsWatching(true);
     hapticImpact('medium');
-
     try {
       const rewarded = await showRewardedVideo();
-
       if (rewarded) {
-        // Backend ga yuborish
         try {
           const result = (await apiRequest('/me/video-bonus', {
             method: 'POST',
           })) as { earned: number };
-
           hapticSuccess();
-          toast(`+${result.earned} coin olindi!`, 'success');
+          toast(`+${result.earned} coin!`, 'success');
           await refreshUser();
         } catch {
-          // Backend ishlamasa — demo hisoblash
           const earned = Math.floor(Math.random() * 20) + 10;
           hapticSuccess();
-          toast(`+${earned} coin olindi! (demo)`, 'success');
+          toast(`+${earned} coin! (demo)`, 'success');
         }
-
-        // Video hisobini yangilash
         const newUsed = videoData.used + 1;
         saveVideoCount(newUsed);
         setVideoData({ used: newUsed, date: new Date().toDateString() });
@@ -187,181 +165,92 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         {/* ---- TEPADA BO'SH JOY ---- */}
         <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 15px)' }} />
 
-        {/* ---- BONUS EVENTLAR — faqat faol bo'lsa ko'rinadi ---- */}
+        {/* ---- BONUS EVENTLAR — ixcham satr ---- */}
         {bonusEvents.map((event, index) => (
           <div
-            key={(event as Record<string, unknown>).id as number || index}
+            key={(event.id as number) || index}
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '12px 16px',
-              marginBottom: '6px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, rgba(155,93,229,0.15), rgba(255,0,110,0.1))',
-              border: '1px solid rgba(155,93,229,0.2)',
-              backdropFilter: 'blur(8px)',
+              padding: '8px 12px',
+              marginBottom: '4px',
+              borderRadius: '8px',
+              background: 'rgba(155,93,229,0.1)',
+              border: '1px solid rgba(155,93,229,0.15)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '16px' }}>
-                {(event as Record<string, unknown>).icon as string || '🎉'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '12px' }}>{(event.icon as string) || '🎉'}</span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '11px',
+                  color: 'rgba(255,255,255,0.7)',
+                }}
+              >
+                {(event.title as string) || 'Maxsus bonus'}
               </span>
-              <div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#fff',
-                  }}
-                >
-                  {(event as Record<string, unknown>).title as string || 'Maxsus bonus'}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '10px',
-                    color: 'rgba(255,255,255,0.45)',
-                  }}
-                >
-                  {(event as Record<string, unknown>).description as string || 'Cheklangan vaqt'}
-                </div>
-              </div>
             </div>
-            <div
+            <span
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: 700,
                 color: '#9b5de5',
-                padding: '4px 10px',
-                borderRadius: '8px',
-                background: 'rgba(155,93,229,0.15)',
               }}
             >
-              +{(event as Record<string, unknown>).reward as number || 50} 🪙
-            </div>
+              +{(event.reward as number) || 50} 🪙
+            </span>
           </div>
         ))}
 
-        {/* ---- KUNLIK BONUS — faqat limit bo'lsa ko'rinadi ---- */}
+        {/* ---- KUNLIK BONUS — ixcham bitta satr ---- */}
         {showDailyBonus && (
           <div
             style={{
-              marginTop: '8px',
-              padding: '16px 18px',
-              borderRadius: '14px',
-              background: 'rgba(0, 0, 0, 0.4)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 0, 110, 0.12)',
-              animation: 'fadeUp 0.4s ease forwards',
+              marginTop: bonusEvents.length > 0 ? '4px' : '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              background: 'rgba(0, 0, 0, 0.35)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 0, 110, 0.08)',
+              animation: 'fadeUp 0.3s ease forwards',
             }}
           >
-            {/* Sarlavha */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '12px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>🎁</span>
-                <div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      color: '#fff',
-                    }}
-                  >
-                    Kunlik bonus
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '11px',
-                      color: 'rgba(255,255,255,0.4)',
-                    }}
-                  >
-                    Video ko'rganingizda bonus oling
-                  </div>
-                </div>
-              </div>
+            {/* Ikonka */}
+            <span style={{ fontSize: '16px' }}>🎁</span>
 
-              {/* Qolgan limit */}
-              <div
+            {/* Sarlavha */}
+            <div style={{ flex: 1 }}>
+              <span
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 10px',
-                  borderRadius: '10px',
-                  background: 'rgba(255, 0, 110, 0.1)',
-                  border: '1px solid rgba(255, 0, 110, 0.15)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'rgba(255,255,255,0.7)',
                 }}
               >
-                <span style={{ fontSize: '12px' }}>🎬</span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: '#ff006e',
-                  }}
-                >
-                  {videosLeft}/{MAX_VIDEOS}
-                </span>
-              </div>
+                Kunlik bonus
+              </span>
             </div>
 
-            {/* Progress bar */}
-            <div
-              style={{
-                width: '100%',
-                height: '4px',
-                borderRadius: '2px',
-                background: 'rgba(255,255,255,0.06)',
-                marginBottom: '12px',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  width: `${(videoData.used / MAX_VIDEOS) * 100}%`,
-                  height: '100%',
-                  borderRadius: '2px',
-                  background: 'linear-gradient(90deg, #ff006e, #ff4757)',
-                  transition: 'width 0.4s ease',
-                }}
-              />
-            </div>
-
-            {/* Dotlar — nechta qolganini ko'rsatadi */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                marginBottom: '14px',
-              }}
-            >
+            {/* Dotlar — qolgan limit */}
+            <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
               {Array.from({ length: MAX_VIDEOS }).map((_, i) => (
                 <div
                   key={i}
                   style={{
-                    width: '8px',
-                    height: '8px',
+                    width: '6px',
+                    height: '6px',
                     borderRadius: '50%',
                     background:
                       i < videoData.used
                         ? '#ff006e'
-                        : 'rgba(255,255,255,0.12)',
+                        : 'rgba(255,255,255,0.15)',
                     transition: 'all 0.3s ease',
                   }}
                 />
@@ -373,46 +262,27 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               onClick={handleWatchVideo}
               disabled={isWatching}
               style={{
-                width: '100%',
-                padding: '11px 20px',
-                borderRadius: '10px',
+                padding: '5px 10px',
+                borderRadius: '6px',
                 border: 'none',
                 background: isWatching
                   ? 'rgba(255,255,255,0.05)'
-                  : 'linear-gradient(135deg, #ff006e 0%, #ff4757 100%)',
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 700,
-                letterSpacing: '1.5px',
-                color: isWatching ? 'rgba(255,255,255,0.3)' : '#fff',
-                cursor: isWatching ? 'default' : 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: isWatching
-                  ? 'none'
-                  : '0 3px 15px rgba(255, 0, 110, 0.3)',
-              }}
-            >
-              {isWatching ? 'KO\'RILMOQDA...' : '▶ VIDEO KO\'RISH'}
-            </button>
-
-            {/* Qolgan vaqt */}
-            <div
-              style={{
+                  : 'rgba(255, 0, 110, 0.2)',
                 fontFamily: 'var(--font-body)',
                 fontSize: '10px',
-                color: 'rgba(255,255,255,0.25)',
-                textAlign: 'center',
-                marginTop: '8px',
+                fontWeight: 600,
+                color: isWatching ? 'rgba(255,255,255,0.3)' : '#ff006e',
+                cursor: isWatching ? 'default' : 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s ease',
               }}
             >
-              {videosLeft > 0
-                ? `Yana ${videosLeft} ta video ko'rishingiz mumkin`
-                : 'Ertaga qaytang!'}
-            </div>
+              {isWatching ? '...' : `${videosLeft} ta`}
+            </button>
           </div>
         )}
 
-        {/* ---- MARKAZIY BO'SH JOY ---- */}
+        {/* ---- MARKAZIY BO'SH JOY — logo uchun ---- */}
         <div style={{ flex: 1 }} />
 
         {/* ---- TUGMALAR — PIRAMIDA ---- */}
