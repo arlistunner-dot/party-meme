@@ -114,7 +114,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
+        height: '100%',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -163,7 +163,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       >
         {/* TEPADA BO'SH JOY */}
-        <div style={{ height: 'calc(env(safe-area-inset-top, 0px) + 15px)' }} />
+         <div style={{ height: '8px' }} />
 
         {/* BONUS EVENTLAR */}
         {bonusEvents.map((event, index) => (
