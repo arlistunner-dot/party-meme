@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { hapticImpact, hapticSuccess, hapticError } from '@/config/telegram';
 import { useToast } from '@/components/common/Toast';
-import { apiRequest } from '@/config/api';
 
 interface HomeScreenProps {
   onPlay: () => void;
@@ -53,35 +52,18 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
 
   const [videoData, setVideoData] = useState(getVideoCount());
   const [isWatching, setIsWatching] = useState(false);
-  const [bonusEvents, setBonusEvents] = useState<Record<string, unknown>[]>([]);
-  const [screenHeight, setScreenHeight] = useState(window.innerHeight);
 
   const videosLeft = MAX_VIDEOS - videoData.used;
   const showDailyBonus = videosLeft > 0;
 
-  // Telegram WebApp ni expand qilish
+  // Telegram WebApp expand
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.expand();
-      // Viewport o'zgarishini kuzatish
-      tg.onEvent('viewportChanged', () => {
-        setScreenHeight(tg.viewportHeight || window.innerHeight);
-      });
-      setScreenHeight(tg.viewportHeight || window.innerHeight);
-    }
-  }, []);
-
-  useEffect(() => {
-    async function loadEvents() {
-      try {
-        const events = (await apiRequest('/bonus-events')) as Record<string, unknown>[];
-        if (Array.isArray(events)) {
-          setBonusEvents(events.filter((e) => e.active));
-        }
-      } catch {}
-    }
-    loadEvents();
+    try {
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        tg.expand();
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -96,18 +78,10 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
     try {
       const rewarded = await showRewardedVideo();
       if (rewarded) {
-        try {
-          const result = (await apiRequest('/me/video-bonus', {
-            method: 'POST',
-          })) as { earned: number };
-          hapticSuccess();
-          toast(`+${result.earned} coin!`, 'success');
-          await refreshUser();
-        } catch {
-          const earned = Math.floor(Math.random() * 20) + 10;
-          hapticSuccess();
-          toast(`+${earned} coin! (demo)`, 'success');
-        }
+        const earned = Math.floor(Math.random() * 20) + 10;
+        hapticSuccess();
+        toast(`+${earned} coin!`, 'success');
+        if (refreshUser) await refreshUser();
         const newUsed = videoData.used + 1;
         saveVideoCount(newUsed);
         setVideoData({ used: newUsed, date: new Date().toDateString() });
@@ -125,11 +99,12 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
   return (
     <div
       style={{
+        position: 'relative',
+        width: '100%',
+        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        height: `${screenHeight}px`,
-        position: 'relative',
-        overflow: 'hidden',
+        backgroundColor: '#0a0a0f',
       }}
     >
       {/* FON RASMI */}
@@ -171,89 +146,42 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          padding: '0 20px',
-          paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px) + 12px)',
+          padding: '16px 20px',
         }}
       >
-        {/* TEPADA BO'SH JOY */}
-        <div style={{ height: '8px' }} />
-
-        {/* BONUS EVENTLAR */}
-        {bonusEvents.map((event, index) => (
-          <div
-            key={(event.id as number) || index}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 12px',
-              marginBottom: '4px',
-              borderRadius: '8px',
-              background: 'rgba(155,93,229,0.1)',
-              border: '1px solid rgba(155,93,229,0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '12px' }}>{(event.icon as string) || '🎉'}</span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.7)',
-                }}
-              >
-                {(event.title as string) || 'Maxsus bonus'}
-              </span>
-            </div>
-            <span
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '10px',
-                fontWeight: 700,
-                color: '#9b5de5',
-              }}
-            >
-              +{(event.reward as number) || 50} 🪙
-            </span>
-          </div>
-        ))}
-
-        {/* KUNLIK BONUS — ixcham satr */}
+        {/* KUNLIK BONUS — eng yuqorida, doimo ko'rinadigan */}
         {showDailyBonus && (
           <div
             style={{
-              marginTop: '16px',
+              marginBottom: '20px',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              padding: '12px 16px',
+              padding: '14px 16px',
               borderRadius: '12px',
-              background: 'rgba(255, 0, 110, 0.08)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 0, 110, 0.15)',
-              boxShadow: '0 2px 12px rgba(255, 0, 110, 0.1)',
+              background: 'rgba(255, 0, 110, 0.15)',
+              border: '2px solid rgba(255, 0, 110, 0.4)',
+              boxShadow: '0 4px 20px rgba(255, 0, 110, 0.2)',
             }}
           >
-            <span style={{ fontSize: '20px' }}>🎁</span>
+            <span style={{ fontSize: '22px', lineHeight: 1 }}>🎁</span>
 
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1 }}>
               <div
                 style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '13px',
+                  fontFamily: 'var(--font-display), sans-serif',
+                  fontSize: '14px',
                   fontWeight: 700,
-                  color: '#fff',
-                  lineHeight: 1.3,
+                  color: '#ffffff',
                 }}
               >
                 Kunlik bonus
               </div>
               <div
                 style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  color: 'rgba(255,255,255,0.4)',
+                  fontFamily: 'var(--font-body), sans-serif',
+                  fontSize: '11px',
+                  color: 'rgba(255,255,255,0.5)',
                   marginTop: '2px',
                 }}
               >
@@ -266,18 +194,11 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
                 <div
                   key={i}
                   style={{
-                    width: '7px',
-                    height: '7px',
+                    width: '8px',
+                    height: '8px',
                     borderRadius: '50%',
-                    background:
-                      i < videoData.used
-                        ? '#ff006e'
-                        : 'rgba(255,255,255,0.15)',
-                    boxShadow:
-                      i < videoData.used
-                        ? '0 0 6px rgba(255,0,110,0.4)'
-                        : 'none',
-                    transition: 'all 0.3s ease',
+                    background: i < videoData.used ? '#ff006e' : 'rgba(255,255,255,0.2)',
+                    boxShadow: i < videoData.used ? '0 0 6px #ff006e' : 'none',
                   }}
                 />
               ))}
@@ -291,19 +212,14 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
                 borderRadius: '8px',
                 border: 'none',
                 background: isWatching
-                  ? 'rgba(255,255,255,0.05)'
-                  : 'linear-gradient(135deg, #ff006e, #ff4757)',
-                fontFamily: 'var(--font-display)',
-                fontSize: '11px',
+                  ? 'rgba(255,255,255,0.1)'
+                  : '#ff006e',
+                fontFamily: 'var(--font-display), sans-serif',
+                fontSize: '12px',
                 fontWeight: 700,
-                letterSpacing: '0.5px',
-                color: isWatching ? 'rgba(255,255,255,0.3)' : '#fff',
+                color: '#ffffff',
                 cursor: isWatching ? 'default' : 'pointer',
                 whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease',
-                boxShadow: isWatching
-                  ? 'none'
-                  : '0 2px 10px rgba(255, 0, 110, 0.3)',
               }}
             >
               {isWatching ? '...' : `▶ ${videosLeft}`}
@@ -311,17 +227,16 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           </div>
         )}
 
-        {/* MARKAZIY BO'SH JOY — logo uchun */}
-        <div style={{ flex: 1, minHeight: '40px' }} />
+        {/* MARKAZIY BO'SH JOY */}
+        <div style={{ flex: 1 }} />
 
-        {/* TUGMALAR — PIRAMIDA */}
+        {/* TUGMALAR */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: '10px',
-            marginBottom: '12px',
           }}
         >
           <button
@@ -336,19 +251,15 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               borderRadius: '14px',
               border: 'none',
               background: 'linear-gradient(135deg, #ff006e 0%, #ff4757 100%)',
-              boxShadow: '0 4px 20px rgba(255, 0, 110, 0.35), inset 0 1px 0 rgba(255,255,255,0.12)',
-              fontFamily: 'var(--font-display)',
+              boxShadow: '0 4px 20px rgba(255, 0, 110, 0.35)',
+              fontFamily: 'var(--font-display), sans-serif',
               fontSize: '17px',
               fontWeight: 700,
               letterSpacing: '3px',
               color: '#fff',
               cursor: 'pointer',
               textTransform: 'uppercase',
-              transition: 'transform 0.15s ease',
             }}
-            onMouseDown={(e) => ((e.target as HTMLElement).style.transform = 'scale(0.96)')}
-            onMouseUp={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
-            onMouseLeave={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
           >
             ▶ O'YNASH
           </button>
@@ -365,20 +276,14 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               borderRadius: '12px',
               border: '1.5px solid rgba(0, 180, 216, 0.35)',
               background: 'rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-display), sans-serif',
               fontSize: '14px',
               fontWeight: 600,
               letterSpacing: '2px',
               color: '#00b4d8',
               cursor: 'pointer',
               textTransform: 'uppercase',
-              transition: 'transform 0.15s ease',
             }}
-            onMouseDown={(e) => ((e.target as HTMLElement).style.transform = 'scale(0.96)')}
-            onMouseUp={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
-            onMouseLeave={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
           >
             + XONA YARATISH
           </button>
@@ -395,20 +300,14 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               borderRadius: '10px',
               border: '1.5px solid rgba(46, 213, 115, 0.25)',
               background: 'rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-display), sans-serif',
               fontSize: '13px',
               fontWeight: 600,
               letterSpacing: '2px',
               color: '#2ed573',
               cursor: 'pointer',
               textTransform: 'uppercase',
-              transition: 'transform 0.15s ease',
             }}
-            onMouseDown={(e) => ((e.target as HTMLElement).style.transform = 'scale(0.96)')}
-            onMouseUp={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
-            onMouseLeave={(e) => ((e.target as HTMLElement).style.transform = 'scale(1)')}
           >
             🔗 QO'SHILISH
           </button>
