@@ -283,34 +283,6 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
           flexShrink: 0,
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '6px',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.4)',
-            }}
-          >
-            Karta joylari — 2 tasini o'yinga olib kirasiz
-          </span>
-          <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '11px',
-              fontWeight: 700,
-              color: '#00b4d8',
-            }}
-          >
-            Tanlangan: {selectedForGame.length}/2
-          </span>
-        </div>
 
         <div
           style={{
