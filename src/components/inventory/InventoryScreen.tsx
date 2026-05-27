@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCards } from '@/hooks/useCards';
 import { useAuthStore } from '@/store/authStore';
-import { hapticImpact, hapticSuccess, hapticSelection } from '@/config/telegram';
+import { hapticImpact, hapticSuccess, hapticError, hapticSelection } from '@/config/telegram';
 import { useToast } from '@/components/common/Toast';
 import { formatNumber } from '@/utils/formatters';
 
@@ -11,7 +11,9 @@ interface InventoryScreenProps {
   onNavigate: (tab: string) => void;
 }
 
-// Paketlar ro'yxati — karta toifalari
+const MAX_SLOTS = 5;
+
+// Paketlar
 const PACKS = [
   {
     id: 'standard',
@@ -107,9 +109,67 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
     return ['standard', 'national'];
   });
 
+  // Inventardagi kartalar (localStorage demo)
+  const [inventoryCards, setInventoryCards] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('inventory_cards');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  // Tanlangan 2 ta karta (o'ying olib kirish uchun)
+  const [selectedForGame, setSelectedForGame] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('selected_game_cards');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
   useEffect(() => {
     loadMyCards();
   }, [loadMyCards]);
+
+  // Saqlash
+  const saveInventory = (cards: any[]) => {
+    setInventoryCards(cards);
+    localStorage.setItem('inventory_cards', JSON.stringify(cards));
+  };
+
+  const saveSelectedGame = (ids: string[]) => {
+    setSelectedForGame(ids);
+    localStorage.setItem('selected_game_cards', JSON.stringify(ids));
+  };
+
+  // Kartani o'yin uchun tanlash / bekor qilish
+  const toggleCardForGame = (cardId: string) => {
+    hapticImpact('light');
+
+    if (selectedForGame.includes(cardId)) {
+      // Bekor qilish
+      saveSelectedGame(selectedForGame.filter((id) => id !== cardId));
+    } else {
+      if (selectedForGame.length >= 2) {
+        hapticError();
+        toast('Faqat 2 ta karta tanlash mumkin!', 'error');
+        return;
+      }
+      saveSelectedGame([...selectedForGame, cardId]);
+    }
+  };
+
+  // Kartani o'chirish
+  const removeCard = (cardId: string) => {
+    hapticImpact('medium');
+    const updated = inventoryCards.filter((c) => c.id !== cardId);
+    saveInventory(updated);
+    // Tanlangan bo'lsa o'chirish
+    if (selectedForGame.includes(cardId)) {
+      saveSelectedGame(selectedForGame.filter((id) => id !== cardId));
+    }
+    toast('Karta o\'chirildi', 'success');
+  };
 
   const tabs: { id: InventoryTab; label: string; icon: string }[] = [
     { id: 'my_cards', label: 'Kartalarim', icon: '🎴' },
@@ -133,7 +193,6 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
       return;
     }
 
-    // Balandan yechish
     const newCoin = currentUser.coinBalance - pack.priceCoin;
     const newStar = currentUser.starBalance - pack.priceStar;
 
@@ -141,7 +200,6 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
       setUser({ ...user, coinBalance: newCoin, starBalance: newStar } as any);
     }
 
-    // Paketni qo'shish
     const updated = [...purchasedPacks, pack.id];
     setPurchasedPacks(updated);
     localStorage.setItem('purchased_packs', JSON.stringify(updated));
@@ -149,6 +207,8 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
     hapticSuccess();
     toast(`${pack.name} paketi sotib olindi!`, 'success');
   };
+
+  const usedSlots = inventoryCards.length;
 
   return (
     <div
@@ -204,7 +264,76 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
         >
           INVENTAR
         </h1>
-        <div style={{ width: '34px' }} />
+        <div
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: usedSlots >= MAX_SLOTS ? '#ff4757' : '#2ed573',
+          }}
+        >
+          {usedSlots}/{MAX_SLOTS}
+        </div>
+      </div>
+
+      {/* SLOT HOLATI */}
+      <div
+        style={{
+          padding: '0 16px 10px',
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '6px',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '11px',
+              color: 'rgba(255,255,255,0.4)',
+            }}
+          >
+            Karta joylari — 2 tasini o'yinga olib kirasiz
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#00b4d8',
+            }}
+          >
+            Tanlangan: {selectedForGame.length}/2
+          </span>
+        </div>
+
+        <div
+          style={{
+            width: '100%',
+            height: '5px',
+            borderRadius: '3px',
+            background: 'rgba(255,255,255,0.06)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${(usedSlots / MAX_SLOTS) * 100}%`,
+              height: '100%',
+              borderRadius: '3px',
+              background:
+                usedSlots >= MAX_SLOTS
+                  ? '#ff4757'
+                  : 'linear-gradient(90deg, #ff006e, #9b5de5)',
+              transition: 'width 0.4s ease',
+            }}
+          />
+        </div>
       </div>
 
       {/* TAB TUGMALARI */}
@@ -266,12 +395,25 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
       >
         {/* === KARTALARIM === */}
         {activeTab === 'my_cards' && (
-          <MyCardsView cards={myCards} />
+          <MyCardsView
+            cards={inventoryCards}
+            selectedForGame={selectedForGame}
+            onToggleSelect={toggleCardForGame}
+            onRemove={removeCard}
+            maxSlots={MAX_SLOTS}
+            purchasedPacks={purchasedPacks}
+            onSaveCards={saveInventory}
+          />
         )}
 
         {/* === YARATISH === */}
         {activeTab === 'create' && (
-          <CreateCardView onCreated={() => setActiveTab('my_cards')} />
+          <CreateCardView
+            onCreated={() => setActiveTab('my_cards')}
+            inventoryCards={inventoryCards}
+            maxSlots={MAX_SLOTS}
+            onSaveCards={saveInventory}
+          />
         )}
 
         {/* === PAKETLAR === */}
@@ -288,11 +430,287 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
 }
 
 // ============================================
-// KARTALARIM BO'LIMI
+// KARTALARIM — 5 TA SLOT
 // ============================================
 
-function MyCardsView({ cards }: { cards: any[] }) {
-  if (cards.length === 0) {
+function MyCardsView({
+  cards,
+  selectedForGame,
+  onToggleSelect,
+  onRemove,
+  maxSlots,
+  purchasedPacks,
+  onSaveCards,
+}: {
+  cards: any[];
+  selectedForGame: string[];
+  onToggleSelect: (id: string) => void;
+  onRemove: (id: string) => void;
+  maxSlots: number;
+  purchasedPacks: string[];
+  onSaveCards: (cards: any[]) => void;
+}) {
+  const { toast } = useToast();
+
+  // 5 ta slot uchun placeholder
+  const slots = Array.from({ length: maxSlots }).map((_, i) => {
+    return cards[i] || null;
+  });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Slotlar */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '10px',
+        }}
+      >
+        {slots.map((card, i) => {
+          if (!card) {
+            // Bo'sh slot
+            return (
+              <div
+                key={`empty-${i}`}
+                style={{
+                  height: '160px',
+                  borderRadius: '14px',
+                  border: '2px dashed rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.02)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '28px', opacity: 0.3 }}>🃏</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '10px',
+                    color: 'rgba(255,255,255,0.2)',
+                  }}
+                >
+                  Slot {i + 1}
+                </span>
+              </div>
+            );
+          }
+
+          // Karta bor
+          const isSelected = selectedForGame.includes(card.id);
+
+          return (
+            <div
+              key={card.id || i}
+              style={{
+                position: 'relative',
+                borderRadius: '14px',
+                background: isSelected
+                  ? 'rgba(0,180,216,0.08)'
+                  : 'rgba(255,255,255,0.04)',
+                border: isSelected
+                  ? '2px solid rgba(0,180,216,0.5)'
+                  : '1px solid rgba(255,255,255,0.06)',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onClick={() => onToggleSelect(card.id)}
+            >
+              {/* Tanlash belgisi */}
+              {isSelected && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '6px',
+                    left: '6px',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: '#00b4d8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    color: '#fff',
+                    fontWeight: 700,
+                    zIndex: 3,
+                  }}
+                >
+                  ✓
+                </div>
+              )}
+
+              {/* O'chirish tugmasi */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(card.id);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '6px',
+                  right: '6px',
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: 'rgba(255,71,87,0.3)',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  zIndex: 3,
+                  padding: 0,
+                }}
+              >
+                ✕
+              </button>
+
+              {/* Karta rasmi */}
+              <div
+                style={{
+                  width: '100%',
+                  height: '100px',
+                  background: card.imageUrl
+                    ? `url(${card.imageUrl}) center/cover`
+                    : 'linear-gradient(135deg, rgba(155,93,229,0.2), rgba(255,0,110,0.2))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '36px',
+                }}
+              >
+                {!card.imageUrl && (card.icon || '🃏')}
+              </div>
+
+              {/* Karta ma'lumoti */}
+              <div style={{ padding: '8px 10px' }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#fff',
+                    marginBottom: '3px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {card.title || 'Karta'}
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '9px',
+                      color: 'rgba(255,255,255,0.4)',
+                      background: 'rgba(255,255,255,0.05)',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {card.category || 'Standart'}
+                  </span>
+                  {card.power && (
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        color: '#ff006e',
+                      }}
+                    >
+                      ⚡{card.power}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Ma'lumot */}
+      {cards.length === 0 && (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.35)',
+              lineHeight: 1.6,
+            }}
+          >
+            Paketlar bo'limidan karta sotib oling
+            yoki o'yinda random kartalar tushadi.
+            5 ta slot — 2 tasini o'yinga olib kirasiz.
+          </div>
+        </div>
+      )}
+
+      {/* Tanlangan kartalar ma'lumoti */}
+      {selectedForGame.length > 0 && (
+        <div
+          style={{
+            padding: '10px 14px',
+            borderRadius: '10px',
+            background: 'rgba(0,180,216,0.08)',
+            border: '1px solid rgba(0,180,216,0.2)',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '11px',
+              color: 'rgba(255,255,255,0.5)',
+              textAlign: 'center',
+            }}
+          >
+            🎮 O'yinga {selectedForGame.length}/2 ta karta tanlandi.
+            O'yinda +5 ta random karta beriladi (jami 7 ta).
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// YARATISH BO'LIMI
+// ============================================
+
+function CreateCardView({
+  onCreated,
+  inventoryCards,
+  maxSlots,
+  onSaveCards,
+}: {
+  onCreated: () => void;
+  inventoryCards: any[];
+  maxSlots: number;
+  onSaveCards: (cards: any[]) => void;
+}) {
+  const { toast } = useToast();
+
+  if (inventoryCards.length >= maxSlots) {
     return (
       <div
         style={{
@@ -304,7 +722,7 @@ function MyCardsView({ cards }: { cards: any[] }) {
           textAlign: 'center',
         }}
       >
-        <span style={{ fontSize: '48px', marginBottom: '16px' }}>🎴</span>
+        <span style={{ fontSize: '48px', marginBottom: '16px' }}>🚫</span>
         <div
           style={{
             fontFamily: 'var(--font-display)',
@@ -314,7 +732,7 @@ function MyCardsView({ cards }: { cards: any[] }) {
             marginBottom: '8px',
           }}
         >
-          Kartalar yo'q
+          Slotlar to'ldi
         </div>
         <div
           style={{
@@ -324,102 +742,11 @@ function MyCardsView({ cards }: { cards: any[] }) {
             maxWidth: '240px',
           }}
         >
-          O'yinda random berilgan kartalar shu yerda ko'rinadi
+          {maxSlots} ta karta joyi to'ldi. Avval bitta kartani o'chiring.
         </div>
       </div>
     );
   }
-
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '10px',
-      }}
-    >
-      {cards.map((card: any, i: number) => (
-        <div
-          key={card.id || i}
-          style={{
-            borderRadius: '14px',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            overflow: 'hidden',
-            animation: 'fadeUp 0.3s ease forwards',
-            animationDelay: `${i * 0.05}s`,
-            opacity: 0,
-          }}
-        >
-          {/* Karta rasmi */}
-          <div
-            style={{
-              width: '100%',
-              height: '120px',
-              background: card.imageUrl
-                ? `url(${card.imageUrl}) center/cover`
-                : 'linear-gradient(135deg, rgba(155,93,229,0.2), rgba(255,0,110,0.2))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '40px',
-            }}
-          >
-            {!card.imageUrl && (card.icon || '🃏')}
-          </div>
-
-          {/* Karta ma'lumoti */}
-          <div style={{ padding: '10px' }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#fff',
-                marginBottom: '4px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {card.title || 'Karta'}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  color: 'rgba(255,255,255,0.4)',
-                }}
-              >
-                {card.category || 'Standart'}
-              </span>
-              {card.power && (
-                <span
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    color: '#ff006e',
-                  }}
-                >
-                  ⚡{card.power}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ============================================
-// YARATISH BO'LIMI
-// ============================================
-
-function CreateCardView({ onCreated }: { onCreated: () => void }) {
-  const { toast } = useToast();
 
   return (
     <div
@@ -453,7 +780,7 @@ function CreateCardView({ onCreated }: { onCreated: () => void }) {
           marginBottom: '20px',
         }}
       >
-        O'z kartangizni yarating va o'yinda ishlating
+        O'z kartangizni yarating. {maxSlots - inventoryCards.length} ta slot bo'sh.
       </div>
       <button
         onClick={() => {
@@ -497,7 +824,7 @@ function PacksView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Bepul paketlar */}
+      {/* Bepul */}
       <div>
         <h3
           style={{
@@ -509,91 +836,80 @@ function PacksView({
             letterSpacing: '1px',
           }}
         >
-          🆓 BEPUL PAKETLAR
+          🆓 BEPUL TOIFALAR
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {freePacks.map((pack) => {
-            const owned = purchasedPacks.includes(pack.id);
-            return (
+          {freePacks.map((pack) => (
+            <div
+              key={pack.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 14px',
+                borderRadius: '12px',
+                background: `linear-gradient(135deg, ${pack.color}11, ${pack.color}08)`,
+                border: `1px solid ${pack.color}33`,
+              }}
+            >
               <div
-                key={pack.id}
                 style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  background: `linear-gradient(135deg, ${pack.color}22, ${pack.color}11)`,
+                  border: `1px solid ${pack.color}33`,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
-                  background: owned
-                    ? `linear-gradient(135deg, ${pack.color}11, ${pack.color}08)`
-                    : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${owned ? `${pack.color}33` : 'rgba(255,255,255,0.05)'}`,
+                  justifyContent: 'center',
+                  fontSize: '22px',
+                  flexShrink: 0,
                 }}
               >
-                {/* Ikonka */}
+                {pack.icon}
+              </div>
+              <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: `linear-gradient(135deg, ${pack.color}22, ${pack.color}11)`,
-                    border: `1px solid ${pack.color}33`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '22px',
-                    flexShrink: 0,
-                  }}
-                >
-                  {pack.icon}
-                </div>
-
-                {/* Ma'lumot */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      color: '#fff',
-                    }}
-                  >
-                    {pack.name}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '10px',
-                      color: 'rgba(255,255,255,0.4)',
-                      marginTop: '2px',
-                    }}
-                  >
-                    {pack.description}
-                  </div>
-                </div>
-
-                {/* Holat */}
-                <div
-                  style={{
-                    padding: '4px 10px',
-                    borderRadius: '8px',
-                    background: 'rgba(46,213,115,0.12)',
-                    border: '1px solid rgba(46,213,115,0.2)',
                     fontFamily: 'var(--font-display)',
-                    fontSize: '10px',
+                    fontSize: '14px',
                     fontWeight: 700,
-                    color: '#2ed573',
-                    whiteSpace: 'nowrap',
+                    color: '#fff',
                   }}
                 >
-                  ✓ MAVJUD
+                  {pack.name}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '10px',
+                    color: 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  {pack.description}
                 </div>
               </div>
-            );
-          })}
+              <div
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '8px',
+                  background: 'rgba(46,213,115,0.12)',
+                  border: '1px solid rgba(46,213,115,0.2)',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: '#2ed573',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ✓ MAVJUD
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Pullik paketlar */}
+      {/* Pullik */}
       <div>
         <h3
           style={{
@@ -610,9 +926,10 @@ function PacksView({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           {paidPacks.map((pack) => {
             const owned = purchasedPacks.includes(pack.id);
-            const priceText = pack.priceCoin > 0
-              ? `${pack.priceCoin} 🪙`
-              : `${pack.priceStar} ⭐`;
+            const priceText =
+              pack.priceCoin > 0
+                ? `${pack.priceCoin} 🪙`
+                : `${pack.priceStar} ⭐`;
 
             return (
               <div
@@ -626,10 +943,11 @@ function PacksView({
                   background: owned
                     ? `linear-gradient(135deg, ${pack.color}11, ${pack.color}08)`
                     : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${owned ? `${pack.color}33` : 'rgba(255,255,255,0.05)'}`,
+                  border: `1px solid ${
+                    owned ? `${pack.color}33` : 'rgba(255,255,255,0.05)'
+                  }`,
                 }}
               >
-                {/* Ikonka */}
                 <div
                   style={{
                     width: '44px',
@@ -646,9 +964,7 @@ function PacksView({
                 >
                   {pack.icon}
                 </div>
-
-                {/* Ma'lumot */}
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1 }}>
                   <div
                     style={{
                       fontFamily: 'var(--font-display)',
@@ -664,14 +980,11 @@ function PacksView({
                       fontFamily: 'var(--font-body)',
                       fontSize: '10px',
                       color: 'rgba(255,255,255,0.4)',
-                      marginTop: '2px',
                     }}
                   >
-                    {pack.cards} ta karta
+                    {pack.cards} ta karta · {pack.description}
                   </div>
                 </div>
-
-                {/* Tugma — sotib olingan yoki sotib olish */}
                 {owned ? (
                   <div
                     style={{
@@ -702,7 +1015,6 @@ function PacksView({
                       color: '#fff',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
-                      transition: 'transform 0.15s ease',
                     }}
                   >
                     {priceText}
