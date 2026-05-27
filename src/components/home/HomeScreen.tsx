@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { formatNumber } from '@/utils/formatters';
 import { hapticImpact, hapticSuccess, hapticError } from '@/config/telegram';
 import { useToast } from '@/components/common/Toast';
 import { apiRequest } from '@/config/api';
@@ -114,9 +113,10 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100dvh',
+        minHeight: '100vh',
         position: 'relative',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}
     >
       {/* FON RASMI */}
@@ -126,7 +126,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           top: 0,
           left: 0,
           width: '100%',
-          height: '100dvh',
+          height: '100%',
           zIndex: 0,
           backgroundImage: 'url(/assets/home-bg.png)',
           backgroundSize: 'cover',
@@ -163,7 +163,7 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
         }}
       >
         {/* TEPADA BO'SH JOY */}
-         <div style={{ height: '8px' }} />
+        <div style={{ height: '8px' }} />
 
         {/* BONUS EVENTLAR */}
         {bonusEvents.map((event, index) => (
@@ -299,8 +299,8 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
           </div>
         )}
 
-        {/* MARKAZIY BO'SH JOY */}
-        <div style={{ flex: 1 }} />
+        {/* MARKAZIY BO'SH JOY — logo uchun */}
+        <div style={{ flex: 1, minHeight: '40px' }} />
 
         {/* TUGMALAR — PIRAMIDA */}
         <div
