@@ -54,9 +54,23 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
   const [videoData, setVideoData] = useState(getVideoCount());
   const [isWatching, setIsWatching] = useState(false);
   const [bonusEvents, setBonusEvents] = useState<Record<string, unknown>[]>([]);
+  const [screenHeight, setScreenHeight] = useState(window.innerHeight);
 
   const videosLeft = MAX_VIDEOS - videoData.used;
   const showDailyBonus = videosLeft > 0;
+
+  // Telegram WebApp ni expand qilish
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.expand();
+      // Viewport o'zgarishini kuzatish
+      tg.onEvent('viewportChanged', () => {
+        setScreenHeight(tg.viewportHeight || window.innerHeight);
+      });
+      setScreenHeight(tg.viewportHeight || window.innerHeight);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadEvents() {
@@ -113,10 +127,9 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
       style={{
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh',
+        height: `${screenHeight}px`,
         position: 'relative',
-        overflowY: 'auto',
-        overflowX: 'hidden',
+        overflow: 'hidden',
       }}
     >
       {/* FON RASMI */}
@@ -220,7 +233,6 @@ export default function HomeScreen({ onPlay, onCreateRoom, onJoinRoom }: HomeScr
               WebkitBackdropFilter: 'blur(10px)',
               border: '1px solid rgba(255, 0, 110, 0.15)',
               boxShadow: '0 2px 12px rgba(255, 0, 110, 0.1)',
-              animation: 'fadeUp 0.4s ease forwards',
             }}
           >
             <span style={{ fontSize: '20px' }}>🎁</span>
