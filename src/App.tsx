@@ -4,6 +4,7 @@ import HomeScreen from '@/components/home/HomeScreen';
 import RoomScreen from '@/components/room/RoomScreen';
 import GameScreen from '@/components/game/GameScreen';
 import GameMatchmaking from '@/components/game/GameMatchmaking';
+import GameLobby from '@/components/game/GameLobby';
 import ProfileScreen from '@/components/profile/ProfileScreen';
 import ShopScreen from '@/components/shop/ShopScreen';
 import RatingScreen from '@/components/rank/RankScreen';
@@ -60,6 +61,11 @@ function App() {
 
   // Matchmaking tugadi — lobbyga o'tish
   const handleMatchReady = () => {
+    setGamePhase('lobby');
+  };
+
+  // Lobby tugadi — o'yin boshlash
+  const handleLobbyStart = () => {
     setGamePhase('play');
   };
 
@@ -195,7 +201,7 @@ function App() {
 
   // Asosiy ekranlar
   const renderScreen = () => {
-    // O'YIN
+    // O'YIN — 3 bosqich
     if (showGame) {
       // 1. Matchmaking — 7 o'yinchi qidirish
       if (gamePhase === 'matchmaking') {
@@ -206,7 +212,18 @@ function App() {
           />
         );
       }
-      // 2. O'yin (tayyorgarlik keyin qo'shiladi)
+
+      // 2. Lobby — 30 soniya tayyorgarlik
+      if (gamePhase === 'lobby') {
+        return (
+          <GameLobby
+            onStart={handleLobbyStart}
+            onCancel={handleGameEnd}
+          />
+        );
+      }
+
+      // 3. O'yin
       return <GameScreen onNavigate={handleNavigate} onGameEnd={handleGameEnd} />;
     }
 
