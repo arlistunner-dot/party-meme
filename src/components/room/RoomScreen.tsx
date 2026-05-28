@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/common/Header';
 import { hapticImpact, hapticSuccess, hapticSelection } from '@/config/telegram';
 import { useToast } from '@/components/common/Toast';
+import RoomChat from '@/components/common/RoomChat';
+
 
 interface RoomScreenProps {
   onNavigate: (tab: string) => void;
@@ -738,6 +740,16 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             : `⏳ ${MIN_PLAYERS - players.length} TA O'YINCHI KERAK`}
         </button>
       </div>
+
+            {/* CHAT */}
+      <RoomChat
+        players={players.map((p) => ({
+          id: p.id,
+          name: p.name,
+          avatar: p.avatar,
+        }))}
+      />
+
     </div>
   );
 }
