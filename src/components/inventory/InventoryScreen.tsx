@@ -118,7 +118,7 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
     return [];
   });
 
-  // Tanlangan 2 ta karta (o'ying olib kirish uchun)
+  // Tanlangan 2 ta karta (o'yin olib kirish uchun)
   const [selectedForGame, setSelectedForGame] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('selected_game_cards');
@@ -147,7 +147,6 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
     hapticImpact('light');
 
     if (selectedForGame.includes(cardId)) {
-      // Bekor qilish
       saveSelectedGame(selectedForGame.filter((id) => id !== cardId));
     } else {
       if (selectedForGame.length >= 2) {
@@ -164,7 +163,6 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
     hapticImpact('medium');
     const updated = inventoryCards.filter((c) => c.id !== cardId);
     saveInventory(updated);
-    // Tanlangan bo'lsa o'chirish
     if (selectedForGame.includes(cardId)) {
       saveSelectedGame(selectedForGame.filter((id) => id !== cardId));
     }
@@ -283,7 +281,6 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
           flexShrink: 0,
         }}
       >
-
         <div
           style={{
             width: '100%',
@@ -373,19 +370,12 @@ export default function InventoryScreen({ onNavigate }: InventoryScreenProps) {
             onToggleSelect={toggleCardForGame}
             onRemove={removeCard}
             maxSlots={MAX_SLOTS}
-            purchasedPacks={purchasedPacks}
-            onSaveCards={saveInventory}
           />
         )}
 
         {/* === YARATISH === */}
         {activeTab === 'create' && (
-          <CreateCardView
-            onCreated={() => setActiveTab('my_cards')}
-            inventoryCards={inventoryCards}
-            maxSlots={MAX_SLOTS}
-            onSaveCards={saveInventory}
-          />
+          <CreateCardView />
         )}
 
         {/* === PAKETLAR === */}
@@ -411,16 +401,12 @@ function MyCardsView({
   onToggleSelect,
   onRemove,
   maxSlots,
-  purchasedPacks,
-  onSaveCards,
 }: {
   cards: any[];
   selectedForGame: string[];
   onToggleSelect: (id: string) => void;
   onRemove: (id: string) => void;
   maxSlots: number;
-  purchasedPacks: string[];
-  onSaveCards: (cards: any[]) => void;
 }) {
   const { toast } = useToast();
 
@@ -441,7 +427,6 @@ function MyCardsView({
       >
         {slots.map((card, i) => {
           if (!card) {
-            // Bo'sh slot
             return (
               <div
                 key={`empty-${i}`}
@@ -471,7 +456,6 @@ function MyCardsView({
             );
           }
 
-          // Karta bor
           const isSelected = selectedForGame.includes(card.id);
 
           return (
@@ -492,7 +476,6 @@ function MyCardsView({
               }}
               onClick={() => onToggleSelect(card.id)}
             >
-              {/* Tanlash belgisi */}
               {isSelected && (
                 <div
                   style={{
@@ -516,7 +499,6 @@ function MyCardsView({
                 </div>
               )}
 
-              {/* O'chirish tugmasi */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -544,7 +526,6 @@ function MyCardsView({
                 ✕
               </button>
 
-              {/* Karta rasmi */}
               <div
                 style={{
                   width: '100%',
@@ -561,7 +542,6 @@ function MyCardsView({
                 {!card.imageUrl && (card.icon || '🃏')}
               </div>
 
-              {/* Karta ma'lumoti */}
               <div style={{ padding: '8px 10px' }}>
                 <div
                   style={{
@@ -666,23 +646,94 @@ function MyCardsView({
 }
 
 // ============================================
-// YARATISH BO'LIMI
+// YARATISH BO'LIMI — Moderatsiya tizimi
 // ============================================
 
-function CreateCardView({
-  onCreated,
-  inventoryCards,
-  maxSlots,
-  onSaveCards,
-}: {
-  onCreated: () => void;
-  inventoryCards: any[];
-  maxSlots: number;
-  onSaveCards: (cards: any[]) => void;
-}) {
+function CreateCardView() {
+  const user = useAuthStore((s) => s.user);
   const { toast } = useToast();
 
-  if (inventoryCards.length >= maxSlots) {
+  const [showForm, setShowForm] = useState(false);
+  const [cardTitle, setCardTitle] = useState('');
+  const [cardText, setCardText] = useState('');
+  const [cardCategory, setCardCategory] = useState('sport');
+  const [cardImage, setCardImage] = useState<string | null>(null);
+
+  // Yaratilgan kartalar (demo localStorage)
+  const [myCreatedCards, setMyCreatedCards] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('my_created_cards');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const rating = user?.rating || 0;
+  const canCreate = rating >= 1000;
+
+  const categories = [
+    { id: 'sport', name: 'Sport', icon: '⚽' },
+    { id: 'lifestyle', name: 'Hayot', icon: '🏠' },
+    { id: 'tech', name: 'Texnologiya', icon: '💻' },
+    { id: 'national', name: 'Milliy', icon: '🇺🇿' },
+    { id: 'adult', name: '18+', icon: '🔞' },
+    { id: 'exclusive', name: 'Eksklyuziv', icon: '💎' },
+  ];
+
+  const saveCards = (cards: any[]) => {
+    setMyCreatedCards(cards);
+    localStorage.setItem('my_created_cards', JSON.stringify(cards));
+  };
+
+  const handleSubmit = () => {
+    if (!cardTitle.trim()) {
+      hapticError();
+      toast('Karta nomini kiriting!', 'error');
+      return;
+    }
+    if (!cardText.trim()) {
+      hapticError();
+      toast('Karta matnini kiriting!', 'error');
+      return;
+    }
+
+    const newCard = {
+      id: `created_${Date.now()}`,
+      title: cardTitle.trim(),
+      text: cardText.trim(),
+      category: cardCategory,
+      imageUrl: cardImage,
+      status: 'pending',
+      submittedAt: new Date().toISOString(),
+      usedCount: 0,
+      winCount: 0,
+      starsEarned: 0,
+    };
+
+    saveCards([...myCreatedCards, newCard]);
+
+    hapticSuccess();
+    toast('Karta moderatsiyaga yuborildi!', 'success');
+    setShowForm(false);
+    setCardTitle('');
+    setCardText('');
+    setCardCategory('sport');
+    setCardImage(null);
+  };
+
+  const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCardImage(URL.createObjectURL(file));
+    hapticSuccess();
+  };
+
+  const approvedCards = myCreatedCards.filter((c) => c.status === 'approved');
+  const totalStarsEarned = approvedCards.reduce((sum, c) => sum + c.starsEarned, 0);
+  const totalUses = approvedCards.reduce((sum, c) => sum + c.usedCount, 0);
+
+  // Daraja yetarli emas
+  if (!canCreate) {
     return (
       <div
         style={{
@@ -690,11 +741,11 @@ function CreateCardView({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '60px 20px',
+          padding: '40px 20px',
           textAlign: 'center',
         }}
       >
-        <span style={{ fontSize: '48px', marginBottom: '16px' }}>🚫</span>
+        <span style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</span>
         <div
           style={{
             fontFamily: 'var(--font-display)',
@@ -704,76 +755,495 @@ function CreateCardView({
             marginBottom: '8px',
           }}
         >
-          Slotlar to'ldi
+          Yaratish yopiq
         </div>
         <div
           style={{
             fontFamily: 'var(--font-body)',
             fontSize: '13px',
             color: 'rgba(255,255,255,0.4)',
-            maxWidth: '240px',
+            maxWidth: '260px',
+            lineHeight: 1.6,
+            marginBottom: '16px',
           }}
         >
-          {maxSlots} ta karta joyi to'ldi. Avval bitta kartani o'chiring.
+          Karta yaratish uchun reyting 1000 ga yetishi kerak.
+          Hozirgi reyting:{' '}
+          <strong style={{ color: '#ff006e' }}>{rating}</strong>
+        </div>
+
+        {/* Progress */}
+        <div style={{ width: '100%', maxWidth: '240px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '6px',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+                color: 'rgba(255,255,255,0.3)',
+              }}
+            >
+              {rating}
+            </span>
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+                color: 'rgba(255,255,255,0.3)',
+              }}
+            >
+              1000
+            </span>
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: '6px',
+              borderRadius: '3px',
+              background: 'rgba(255,255,255,0.06)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${Math.min(100, (rating / 1000) * 100)}%`,
+                height: '100%',
+                borderRadius: '3px',
+                background: 'linear-gradient(90deg, #ff006e, #9b5de5)',
+                transition: 'width 0.4s ease',
+              }}
+            />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '60px 20px',
-        textAlign: 'center',
-      }}
-    >
-      <span style={{ fontSize: '48px', marginBottom: '16px' }}>✏️</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* STATISTIKA */}
+      {approvedCards.length > 0 && (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '6px',
+          }}
+        >
+          {[
+            { icon: '🎴', value: String(approvedCards.length), label: 'Karta' },
+            { icon: '🎮', value: String(totalUses), label: 'Ishlatilgan' },
+            { icon: '⭐', value: String(totalStarsEarned), label: 'Stars' },
+          ].map((item) => (
+            <div
+              key={item.label}
+              style={{
+                padding: '10px 6px',
+                borderRadius: '10px',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.05)',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: '16px', marginBottom: '2px' }}>
+                {item.icon}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  color: '#ffd700',
+                }}
+              >
+                {item.value}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '9px',
+                  color: 'rgba(255,255,255,0.3)',
+                }}
+              >
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* YARATISH TUGMASI */}
+      {!showForm && (
+        <button
+          onClick={() => {
+            hapticImpact('medium');
+            setShowForm(true);
+          }}
+          style={{
+            width: '100%',
+            padding: '14px 20px',
+            borderRadius: '12px',
+            border: '2px dashed rgba(255,0,110,0.3)',
+            background: 'rgba(255,0,110,0.05)',
+            fontFamily: 'var(--font-display)',
+            fontSize: '14px',
+            fontWeight: 700,
+            color: '#ff006e',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
+          <span style={{ fontSize: '18px' }}>✏️</span>
+          YANGI KARTA YARATISH
+        </button>
+      )}
+
+      {/* YARATISH FORMASI */}
+      {showForm && (
+        <div
+          style={{
+            padding: '16px',
+            borderRadius: '14px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '14px',
+              fontWeight: 700,
+              color: '#fff',
+            }}
+          >
+            ✏️ Yangi karta
+          </div>
+
+          {/* Toifa tanlash */}
+          <div>
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '11px',
+                color: 'rgba(255,255,255,0.4)',
+                marginBottom: '6px',
+              }}
+            >
+              Toifa
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setCardCategory(cat.id)}
+                  style={{
+                    padding: '5px 10px',
+                    borderRadius: '8px',
+                    border:
+                      cardCategory === cat.id
+                        ? '1px solid rgba(255,0,110,0.5)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                    background:
+                      cardCategory === cat.id
+                        ? 'rgba(255,0,110,0.12)'
+                        : 'rgba(255,255,255,0.04)',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '11px',
+                    color:
+                      cardCategory === cat.id
+                        ? '#ff006e'
+                        : 'rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  {cat.icon} {cat.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Karta nomi */}
+          <input
+            value={cardTitle}
+            onChange={(e) => setCardTitle(e.target.value)}
+            placeholder="Karta nomi"
+            maxLength={50}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              fontFamily: 'var(--font-display)',
+              fontSize: '14px',
+              color: '#fff',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+
+          {/* Karta matni */}
+          <textarea
+            value={cardText}
+            onChange={(e) => setCardText(e.target.value)}
+            placeholder="Karta matni — o'yinda ko'rinadigan yozuv"
+            maxLength={200}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              fontFamily: 'var(--font-body)',
+              fontSize: '13px',
+              color: '#fff',
+              outline: 'none',
+              boxSizing: 'border-box',
+              resize: 'none',
+              minHeight: '60px',
+            }}
+          />
+
+          {/* Rasm */}
+          <div>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1.5px dashed rgba(255,255,255,0.1)',
+                background: cardImage
+                  ? `url(${cardImage}) center/cover`
+                  : 'rgba(255,255,255,0.03)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-body)',
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.4)',
+                minHeight: cardImage ? '80px' : '40px',
+              }}
+            >
+              {!cardImage && (
+                <>
+                  <span>📷</span> Rasm qo'shish (ixtiyoriy)
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImagePick}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
+
+          {/* Tugmalar */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleSubmit}
+              style={{
+                flex: 1,
+                padding: '11px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #ff006e, #ff4757)',
+                fontFamily: 'var(--font-display)',
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#fff',
+                cursor: 'pointer',
+              }}
+            >
+              YUBORISH
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              style={{
+                flex: 1,
+                padding: '11px',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'transparent',
+                fontFamily: 'var(--font-body)',
+                fontSize: '13px',
+                color: 'rgba(255,255,255,0.4)',
+                cursor: 'pointer',
+              }}
+            >
+              BEKOR
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MENING KARTALARIM — moderatsiya holati */}
+      {myCreatedCards.length > 0 && (
+        <div>
+          <h3
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: 'rgba(255,255,255,0.5)',
+              margin: '0 0 10px',
+              letterSpacing: '1px',
+            }}
+          >
+            📝 MENING KARTALARIM
+          </h3>
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}
+          >
+            {myCreatedCards.map((card) => {
+              const statusColors: Record<
+                string,
+                { bg: string; color: string; text: string }
+              > = {
+                pending: {
+                  bg: 'rgba(255,165,0,0.1)',
+                  color: '#ffa502',
+                  text: '⏳ Kutilmoqda',
+                },
+                approved: {
+                  bg: 'rgba(46,213,115,0.1)',
+                  color: '#2ed573',
+                  text: '✅ Tasdiqlangan',
+                },
+                rejected: {
+                  bg: 'rgba(255,71,87,0.1)',
+                  color: '#ff4757',
+                  text: '❌ Rad etilgan',
+                },
+              };
+              const status =
+                statusColors[card.status] || statusColors.pending;
+              const catInfo = categories.find(
+                (c) => c.id === card.category
+              );
+
+              return (
+                <div
+                  key={card.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '10px',
+                      background: card.imageUrl
+                        ? `url(${card.imageUrl}) center/cover`
+                        : 'linear-gradient(135deg, rgba(155,93,229,0.2), rgba(255,0,110,0.2))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {!card.imageUrl && (catInfo?.icon || '🃏')}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: '#fff',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {card.title}
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        marginTop: '3px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '10px',
+                          color: status.color,
+                          background: status.bg,
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        {status.text}
+                      </span>
+                      {card.status === 'approved' && (
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-body)',
+                            fontSize: '10px',
+                            color: 'rgba(255,255,255,0.3)',
+                          }}
+                        >
+                          🎮 {card.usedCount} · ⭐ {card.starsEarned}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tushuntirish */}
       <div
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '16px',
-          fontWeight: 700,
-          color: '#fff',
-          marginBottom: '8px',
+          padding: '12px 14px',
+          borderRadius: '10px',
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.04)',
         }}
       >
-        Karta yaratish
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '11px',
+            color: 'rgba(255,255,255,0.35)',
+            lineHeight: 1.6,
+          }}
+        >
+          ✏️ Yaratgan kartangiz moderatsiyadan o'tgandan keyin umumiy bazaga
+          qo'shiladi. Boshqa o'yinchilar kartangizni o'ynasa va yutsa, sizga ⭐
+          stars keladi.
+        </div>
       </div>
-      <div
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '13px',
-          color: 'rgba(255,255,255,0.4)',
-          maxWidth: '260px',
-          marginBottom: '20px',
-        }}
-      >
-        O'z kartangizni yarating. {maxSlots - inventoryCards.length} ta slot bo'sh.
-      </div>
-      <button
-        onClick={() => {
-          hapticImpact('medium');
-          toast('Karta yaratish — tez orada', 'success');
-        }}
-        style={{
-          padding: '12px 28px',
-          borderRadius: '12px',
-          border: 'none',
-          background: 'linear-gradient(135deg, #ff006e, #ff4757)',
-          fontFamily: 'var(--font-display)',
-          fontSize: '14px',
-          fontWeight: 700,
-          color: '#fff',
-          cursor: 'pointer',
-          boxShadow: '0 4px 15px rgba(255,0,110,0.3)',
-        }}
-      >
-        YARATISH
-      </button>
     </div>
   );
 }
@@ -810,7 +1280,9 @@ function PacksView({
         >
           🆓 BEPUL TOIFALAR
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}
+        >
           {freePacks.map((pack) => (
             <div
               key={pack.id}
@@ -895,7 +1367,9 @@ function PacksView({
         >
           🛒 SOTIB OLISH
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div
+          style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}
+        >
           {paidPacks.map((pack) => {
             const owned = purchasedPacks.includes(pack.id);
             const priceText =
@@ -916,7 +1390,9 @@ function PacksView({
                     ? `linear-gradient(135deg, ${pack.color}11, ${pack.color}08)`
                     : 'rgba(255,255,255,0.03)',
                   border: `1px solid ${
-                    owned ? `${pack.color}33` : 'rgba(255,255,255,0.05)'
+                    owned
+                      ? `${pack.color}33`
+                      : 'rgba(255,255,255,0.05)'
                   }`,
                 }}
               >
@@ -1015,8 +1491,8 @@ function PacksView({
             lineHeight: 1.6,
           }}
         >
-          📦 Sotib olgan paketlaringizdagi kartalar o'yin boshlanganda random tarzda tarqatiladi.
-          Sotib olmagan toifa kartalari tushmaydi.
+          📦 Sotib olgan paketlaringizdagi kartalar o'yin boshlanganda random
+          tarzda tarqatiladi. Sotib olmagan toifa kartalari tushmaydi.
         </div>
       </div>
     </div>
