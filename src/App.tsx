@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/authStore';
 import HomeScreen from '@/components/home/HomeScreen';
 import RoomScreen from '@/components/room/RoomScreen';
 import GameScreen from '@/components/game/GameScreen';
+import GameMatchmaking from '@/components/game/GameMatchmaking';
 import ProfileScreen from '@/components/profile/ProfileScreen';
 import ShopScreen from '@/components/shop/ShopScreen';
 import RatingScreen from '@/components/rank/RankScreen';
@@ -17,12 +18,13 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState<GameScreenType>('home');
   const [showRoom, setShowRoom] = useState(false);
   const [showGame, setShowGame] = useState(false);
+  const [roomMode, setRoomMode] = useState<'create' | 'join'>('create');
+  const [gamePhase, setGamePhase] = useState<'matchmaking' | 'lobby' | 'play'>('matchmaking');
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Telegram bilan login
   useEffect(() => {
-    // Telegram WebApp tayyor
     window.Telegram?.WebApp?.ready?.();
     window.Telegram?.WebApp?.expand?.();
 
@@ -49,23 +51,36 @@ function App() {
     setCurrentScreen(screen as GameScreenType);
   };
 
+  // O'YNASH tugmasi
   const handlePlay = () => {
+    setGamePhase('matchmaking');
     setShowGame(true);
     setCurrentScreen('game');
   };
 
+  // Matchmaking tugadi — lobbyga o'tish
+  const handleMatchReady = () => {
+    setGamePhase('play');
+  };
+
+  // Xona yaratish
   const handleCreateRoom = () => {
+    setRoomMode('create');
     setShowRoom(true);
     setCurrentScreen('room');
   };
 
+  // Xonaga qo'shilish
   const handleJoinRoom = () => {
+    setRoomMode('join');
     setShowRoom(true);
     setCurrentScreen('room');
   };
 
+  // O'yin tugadi
   const handleGameEnd = () => {
     setShowGame(false);
+    setGamePhase('matchmaking');
     setCurrentScreen('home');
   };
 
@@ -180,14 +195,27 @@ function App() {
 
   // Asosiy ekranlar
   const renderScreen = () => {
+    // O'YIN
     if (showGame) {
+      // 1. Matchmaking — 7 o'yinchi qidirish
+      if (gamePhase === 'matchmaking') {
+        return (
+          <GameMatchmaking
+            onReady={handleMatchReady}
+            onCancel={handleGameEnd}
+          />
+        );
+      }
+      // 2. O'yin (tayyorgarlik keyin qo'shiladi)
       return <GameScreen onNavigate={handleNavigate} onGameEnd={handleGameEnd} />;
     }
 
+    // XONA
     if (showRoom) {
-      return <RoomScreen onNavigate={handleNavigate} />;
+      return <RoomScreen onNavigate={handleNavigate} initialMode={roomMode} />;
     }
 
+    // BO'LIMLAR
     switch (currentScreen) {
       case 'home':
         return (
