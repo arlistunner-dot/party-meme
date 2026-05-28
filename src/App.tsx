@@ -24,7 +24,6 @@ function App() {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Telegram bilan login
   useEffect(() => {
     window.Telegram?.WebApp?.ready?.();
     window.Telegram?.WebApp?.expand?.();
@@ -43,7 +42,6 @@ function App() {
     init();
   }, [login]);
 
-  // Navigatsiya
   const handleNavigate = (screen: string) => {
     if (screen === 'home') {
       setShowRoom(false);
@@ -52,45 +50,38 @@ function App() {
     setCurrentScreen(screen as GameScreenType);
   };
 
-  // O'YNASH tugmasi
   const handlePlay = () => {
     setGamePhase('matchmaking');
     setShowGame(true);
     setCurrentScreen('game');
   };
 
-  // Matchmaking tugadi — lobbyga o'tish
   const handleMatchReady = () => {
     setGamePhase('lobby');
   };
 
-  // Lobby tugadi — o'yin boshlash
   const handleLobbyStart = () => {
     setGamePhase('play');
   };
 
-  // Xona yaratish
   const handleCreateRoom = () => {
     setRoomMode('create');
     setShowRoom(true);
     setCurrentScreen('room');
   };
 
-  // Xonaga qo'shilish
   const handleJoinRoom = () => {
     setRoomMode('join');
     setShowRoom(true);
     setCurrentScreen('room');
   };
 
-  // O'yin tugadi
   const handleGameEnd = () => {
     setShowGame(false);
     setGamePhase('matchmaking');
     setCurrentScreen('home');
   };
 
-  // Xato
   if (error && !user) {
     return (
       <div
@@ -141,7 +132,6 @@ function App() {
     );
   }
 
-  // Loading
   if (!ready || (!isAuthenticated && !error)) {
     return (
       <div
@@ -199,11 +189,9 @@ function App() {
     );
   }
 
-  // Asosiy ekranlar
   const renderScreen = () => {
     // O'YIN — 3 bosqich
     if (showGame) {
-      // 1. Matchmaking — 7 o'yinchi qidirish
       if (gamePhase === 'matchmaking') {
         return (
           <GameMatchmaking
@@ -213,7 +201,6 @@ function App() {
         );
       }
 
-      // 2. Lobby — 30 soniya tayyorgarlik
       if (gamePhase === 'lobby') {
         return (
           <GameLobby
@@ -223,13 +210,23 @@ function App() {
         );
       }
 
-      // 3. O'yin
       return <GameScreen onNavigate={handleNavigate} onGameEnd={handleGameEnd} />;
     }
 
-    // XONA
+    // XONA — endi onStartGame bilan
     if (showRoom) {
-      return <RoomScreen onNavigate={handleNavigate} initialMode={roomMode} />;
+      return (
+        <RoomScreen
+          onNavigate={handleNavigate}
+          initialMode={roomMode}
+          onStartGame={() => {
+            setShowRoom(false);
+            setGamePhase('lobby');
+            setShowGame(true);
+            setCurrentScreen('game');
+          }}
+        />
+      );
     }
 
     // BO'LIMLAR
