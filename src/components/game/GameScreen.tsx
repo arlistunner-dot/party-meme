@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { hapticImpact, hapticSuccess } from '@/config/telegram';
+import RoomChat from '@/components/common/RoomChat';
+
 
 interface GameScreenProps {
   onNavigate: (tab: string) => void;
@@ -670,6 +672,18 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
       </div>
+
+            {/* CHAT */}
+      <RoomChat
+        players={[
+          { id: 'p1', name: 'Sardor', avatar: '😎' },
+          { id: 'p2', name: 'Dilnoza', avatar: '🤠' },
+          { id: 'p3', name: 'Javohir', avatar: '👻' },
+          { id: 'p4', name: 'Malika', avatar: '🦊' },
+          { id: 'me', name: 'Siz', avatar: '🤖' },
+        ]}
+      />
+
     </div>
   );
 }
