@@ -69,6 +69,7 @@ function shuffle<T>(arr: T[]): T[] {
   return s;
 }
 
+// 7 ta o'yinchi (Siz + 6 raqib)
 const PLAYERS_INIT: Player[] = [
   { id: 'p1', name: 'Sardor', avatar: '😎', score: 0, cards: 7 },
   { id: 'p2', name: 'Dilnoza', avatar: '🤠', score: 0, cards: 7 },
@@ -81,31 +82,26 @@ const PLAYERS_INIT: Player[] = [
 
 const TOTAL_ROUNDS = 5;
 
-// ============================================================
+// ================================================================
 // STOL ATROFIDAGI O'YINCHILAR POZITSIYALARI
-// (foiz — har qanday ekran o'lchamiga moslashadi)
-// ============================================================
-//  6 ta raqib: yuqori yarim doirada joylashadi
-//  "Siz" — pastda markazda (stol ostida)
+// Rasmdagi oval stolga mos — 6 ta raqib yuqori yarim doirada
+// ================================================================
 //
-//         (1)
-//    (2)       (3)
+// Oval stol (yuqoridan ko'rinish):
 //
-//       (STOL)
+//         p1 (yuqori markaz)
+//    p2              p3
+//       ╭──────────╮
+//       │  STOL    │
+//       │  qizil   │
+//       │ kartalar │
+//       ╰──────────╯
+//    p4              p5
+//         p6 (past markaz)
 //
-//    (4)       (5)
-//         (6)
-// ============================================================
-const PLAYER_POSITIONS: Record<string, { top?: string; bottom?: string; left?: string; right?: string; transform?: string }> = {
-  p1: { top: '0%', left: '50%', transform: 'translateX(-50%)' },
-  p2: { top: '18%', left: '5%' },
-  p3: { top: '18%', right: '5%' },
-  p4: { bottom: '22%', left: '8%' },
-  p5: { bottom: '22%', right: '8%' },
-  p6: { bottom: '5%', left: '50%', transform: 'translateX(-50%)' },
-};
+//    [SIZ — stol pastida, kartalari bilan]
+// ================================================================
 
-// ============= COMPONENT =============
 export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   type Phase = 'waiting' | 'showQuestion' | 'playing' | 'voting' | 'result';
 
@@ -115,7 +111,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   const [roundTimer, setRoundTimer] = useState(30);
   const [countdown, setCountdown] = useState(3);
   const [isTimeWarning, setIsTimeWarning] = useState(false);
-  const [bgLoaded, setBgLoaded] = useState(false);
 
   const [players, setPlayers] = useState<Player[]>(() =>
     PLAYERS_INIT.map((p) => ({ ...p, score: 0 }))
@@ -135,15 +130,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   const [opponentPlays, setOpponentPlays] = useState<Card[]>([]);
   const [winner, setWinner] = useState<Player | null>(null);
 
-  // ====== BG CHECK ======
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => setBgLoaded(true);
-    img.onerror = () => setBgLoaded(false);
-    img.src = '/assets/game-bg.png';
-  }, []);
-
-  // ====== START ROUND ======
+  // ====== START ======
   const startRound = useCallback(() => {
     const available = RED_CARDS.filter((c) => !usedRedIds.has(c.id as number));
     const pool = available.length > 0 ? available : RED_CARDS;
@@ -154,8 +141,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     setPlayerCards((prev) => {
       if (prev.length >= 7) return prev;
       const needed = 7 - prev.length;
-      const existingIds = new Set(prev.map((c) => c.id));
-      const avail = BLUE_CARDS_POOL.filter((c) => !existingIds.has(c.id));
+      const ids = new Set(prev.map((c) => c.id));
+      const avail = BLUE_CARDS_POOL.filter((c) => !ids.has(c.id));
       return [...prev, ...shuffle(avail).slice(0, needed)];
     });
 
@@ -198,7 +185,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     return () => clearInterval(t);
   }, [roundTimer, phase]);
 
-  // ====== SELECT BLUE ======
+  // ====== SELECT ======
   const handleSelectBlue = (id: number | string) => {
     if (phase !== 'playing') return;
     hapticImpact('medium');
@@ -206,10 +193,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     setPlayerCards((prev) => prev.filter((c) => c.id !== id));
 
     setTimeout(() => {
-      const oppCards = shuffle([...BLUE_CARDS_POOL])
-        .filter((c) => c.id !== id)
-        .slice(0, Math.min(6, players.length - 1));
-      setOpponentPlays(oppCards);
+      const opp = shuffle([...BLUE_CARDS_POOL]).filter((c) => c.id !== id).slice(0, 6);
+      setOpponentPlays(opp);
       setPhase('voting');
     }, 1200);
   };
@@ -218,10 +203,10 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   useEffect(() => {
     if (phase !== 'voting') return;
     const t = setTimeout(() => {
-      const allP = players.filter((p) => p.id !== 'me');
-      const rw = allP[Math.floor(Math.random() * allP.length)];
-      setPlayers((prev) => prev.map((p) => p.id === rw.id ? { ...p, score: p.score + 1 } : p));
-      setWinner(rw);
+      const all = players.filter((p) => p.id !== 'me');
+      const w = all[Math.floor(Math.random() * all.length)];
+      setPlayers((prev) => prev.map((p) => p.id === w.id ? { ...p, score: p.score + 1 } : p));
+      setWinner(w);
       hapticSuccess();
       setPhase('result');
     }, 3000);
@@ -236,16 +221,15 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     startRound();
   };
 
-  // ====== HELPERS ======
   const timerColor = roundTimer <= 10 ? '#ff4757' : roundTimer <= 20 ? '#ffa502' : '#2ed573';
   const selectedCardText = [...playerCards, ...opponentPlays, ...BLUE_CARDS_POOL]
     .find((c) => c.id === selectedBlue)?.text || '';
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
-  const otherPlayers = players.filter((p) => p.id !== 'me');
+  const sorted = [...players].sort((a, b) => b.score - a.score);
+  const others = players.filter((p) => p.id !== 'me');
 
-  // ================================================
+  // ================================================================
   // RENDER
-  // ================================================
+  // ================================================================
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
@@ -254,35 +238,20 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
       background: '#0b0b14',
     }}>
 
-      {/* ====== FON ====== */}
-      {bgLoaded ? (
-        <>
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 0,
-            backgroundImage: 'url(/assets/game-bg.png)',
-            backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-          }} />
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 1,
-            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.65) 100%)',
-            pointerEvents: 'none',
-          }} />
-        </>
-      ) : (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 0,
-          background: `
-            radial-gradient(ellipse at 30% 70%, rgba(0,100,60,0.25) 0%, transparent 50%),
-            radial-gradient(ellipse at 70% 30%, rgba(0,80,50,0.2) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 50%, #0a1a0a 0%, #0b0b14 100%)
-          `,
-        }} />
-      )}
-
-      {/* Noise */}
+      {/* ====== FON RASMI — party table ====== */}
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 2, opacity: 0.04, pointerEvents: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        position: 'fixed', inset: 0, zIndex: 0,
+        backgroundImage: 'url(/assets/game-bg.png)',
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#0b0b14',
+      }} />
+      {/* Qoraytirish qatlami */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1,
+        background: 'rgba(0,0,0,0.45)',
+        pointerEvents: 'none',
       }} />
 
       {/* ====== HEADER ====== */}
@@ -291,9 +260,9 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '8px 12px',
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
-        background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)', minHeight: '42px',
-        flexShrink: 0,
+        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        minHeight: '42px', flexShrink: 0,
       }}>
         <button
           onClick={() => { hapticImpact('light'); onGameEnd(); }}
@@ -301,7 +270,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             width: '28px', height: '28px', borderRadius: '6px',
             background: 'rgba(255,255,255,0.1)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: '#fff', fontSize: '13px', fontWeight: 700,
+            cursor: 'pointer', color: '#fff', fontSize: '13px',
           }}
         >←</button>
 
@@ -332,7 +301,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700,
           color: phase === 'playing' ? timerColor : 'rgba(255,255,255,0.2)',
-          transition: 'all 0.3s ease',
           animation: isTimeWarning && phase === 'playing' ? 'pulse 0.5s infinite' : 'none',
         }}>
           {phase === 'playing' ? roundTimer : '⏱'}
@@ -340,7 +308,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
       </div>
 
       {/* ================================================================
-          ASOSIY MAYDON — STOL + O'YINCHILAR + KARTALAR
+          OYIN MAYDONI — STOL ATROFIDA HAMMASI
           ================================================================ */}
       <div style={{
         position: 'relative', zIndex: 10, flex: 1,
@@ -353,26 +321,22 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           <div style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              animation: 'fadeUp 0.3s ease forwards',
-            }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'fadeUp 0.3s ease' }}>
               <div style={{
                 width: '70px', height: '70px', borderRadius: '50%',
-                background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(10px)',
+                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)',
                 border: '3px solid rgba(255,0,110,0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'var(--font-display)', fontSize: '32px',
                 fontWeight: 700, color: '#ff006e',
-                animation: 'pulse 0.8s ease infinite',
+                animation: 'pulse 0.8s infinite',
                 boxShadow: '0 0 30px rgba(255,0,110,0.2)',
               }}>
                 {countdown > 0 ? countdown : '🎯'}
               </div>
               <div style={{
                 marginTop: '10px', fontFamily: 'var(--font-display)',
-                fontSize: '13px', color: 'rgba(255,255,255,0.5)',
-                letterSpacing: '2px', textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+                fontSize: '13px', color: 'rgba(255,255,255,0.5)', letterSpacing: '2px',
               }}>
                 RAUND {round}
               </div>
@@ -382,16 +346,11 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
         {/* ======== SHOW QUESTION ======== */}
         {phase === 'showQuestion' && (
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              animation: 'fadeUp 0.4s ease forwards',
-            }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'fadeUp 0.4s ease' }}>
               <div style={{
                 padding: '16px 20px', borderRadius: '14px',
-                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)',
+                background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(12px)',
                 border: '1.5px solid rgba(255,0,110,0.4)',
                 maxWidth: '300px', textAlign: 'center',
                 boxShadow: '0 8px 30px rgba(255,0,110,0.2)',
@@ -415,7 +374,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         )}
 
         {/* ============================================================
-            PLAYING — STOL + O'YINCHILAR + KARTALAR
+            PLAYING — STOL + O'YINCHILAR STULLARDA + KARTALAR
             ============================================================ */}
         {phase === 'playing' && (
           <div style={{
@@ -423,43 +382,82 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             minHeight: 0, overflow: 'hidden',
           }}>
 
-            {/* ====== STOL MAYDONI (o'yinchilar + stol) ====== */}
+            {/* ====== STOL MAYDONI — o'yinchilar atrofda ====== */}
             <div style={{
               flex: 1, position: 'relative', minHeight: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
 
-              {/* --- STOL (yashil oval) --- */}
+              {/* ---- O'YINCHI 1 — yuqori markaz ---- */}
+              <div style={{
+                position: 'absolute', top: '2%', left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 5,
+              }}>
+                <Seat player={others[0]} />
+              </div>
+
+              {/* ---- O'YINCHI 2 — chap yuqori ---- */}
+              <div style={{
+                position: 'absolute', top: '18%', left: '6%',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 5,
+              }}>
+                <Seat player={others[1]} />
+              </div>
+
+              {/* ---- O'YINCHI 3 — o'ng yuqori ---- */}
+              <div style={{
+                position: 'absolute', top: '18%', right: '6%',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 5,
+              }}>
+                <Seat player={others[2]} />
+              </div>
+
+              {/* ---- O'YINCHI 4 — chap past ---- */}
+              <div style={{
+                position: 'absolute', top: '52%', left: '6%',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 5,
+              }}>
+                <Seat player={others[3]} />
+              </div>
+
+              {/* ---- O'YINCHI 5 — o'ng past ---- */}
+              <div style={{
+                position: 'absolute', top: '52%', right: '6%',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 5,
+              }}>
+                <Seat player={others[4]} />
+              </div>
+
+              {/* ---- O'YINCHI 6 — past markaz (stol ostida emas, yonida) ---- */}
+              <div style={{
+                position: 'absolute', top: '72%', left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 5,
+              }}>
+                <Seat player={others[5]} />
+              </div>
+
+              {/* ---- STOL MARKAZI — qizil kartalar ---- */}
               <div style={{
                 position: 'absolute',
-                width: '78%', maxWidth: '300px',
-                height: '55%', maxHeight: '220px',
-                borderRadius: '50%',
-                background: `
-                  radial-gradient(ellipse at center, rgba(0,80,40,0.45) 0%, rgba(0,50,25,0.35) 70%, transparent 100%)
-                `,
-                border: '2px solid rgba(0,120,60,0.25)',
-                boxShadow: `
-                  inset 0 0 40px rgba(0,0,0,0.3),
-                  0 0 60px rgba(0,80,40,0.15)
-                `,
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                zIndex: 3,
+                top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                zIndex: 4, gap: '6px',
               }}>
-                {/* Qizil kartalar — stol ustida, yopiq */}
+                {/* Qizil kartalar — stol ustida, yopiq holatda */}
                 <div style={{
                   display: 'flex', gap: '4px', justifyContent: 'center',
-                  marginBottom: '6px',
                 }}>
                   {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => {
                     const isRevealed = i + 1 < round;
                     const isCurrent = i + 1 === round;
                     return (
                       <div key={i} style={{
-                        width: '30px', height: '42px', borderRadius: '5px',
+                        width: '32px', height: '44px', borderRadius: '5px',
                         background: isRevealed
-                          ? 'rgba(46,213,115,0.15)'
+                          ? 'rgba(46,213,115,0.2)'
                           : isCurrent
                             ? 'linear-gradient(135deg, #ff006e, #cc0044)'
                             : 'linear-gradient(135deg, #cc0033, #880022)',
@@ -469,13 +467,13 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                             ? '1px solid rgba(46,213,115,0.3)'
                             : '1px solid rgba(255,255,255,0.08)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: isRevealed ? '11px' : '8px',
+                        fontSize: isRevealed ? '12px' : '9px',
                         color: isRevealed ? '#2ed573' : 'rgba(255,255,255,0.5)',
                         fontFamily: 'var(--font-display)', fontWeight: 700,
                         boxShadow: isCurrent
-                          ? '0 0 10px rgba(255,215,0,0.3), 0 2px 6px rgba(0,0,0,0.3)'
-                          : '0 2px 4px rgba(0,0,0,0.3)',
-                        transform: isCurrent ? 'scale(1.08)' : 'scale(1)',
+                          ? '0 0 12px rgba(255,215,0,0.3), 0 2px 6px rgba(0,0,0,0.4)'
+                          : '0 2px 6px rgba(0,0,0,0.3)',
+                        transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
                         transition: 'all 0.3s ease',
                       }}>
                         {isRevealed ? '✓' : i + 1}
@@ -486,89 +484,20 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
                 {/* Savol matni — stol markazida */}
                 <div style={{
-                  padding: '4px 10px', borderRadius: '8px',
-                  background: 'rgba(0,0,0,0.35)',
-                  maxWidth: '200px', textAlign: 'center',
+                  padding: '6px 12px', borderRadius: '8px',
+                  background: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(255,0,110,0.2)',
+                  maxWidth: '220px', textAlign: 'center',
                 }}>
                   <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '9px',
+                    fontFamily: 'var(--font-display)', fontSize: '10px',
                     fontWeight: 700, color: '#ff4757', lineHeight: 1.3,
                   }}>
                     🔴 {currentRed.text}
                   </div>
                 </div>
               </div>
-
-              {/* --- O'YINCHILAR — stol atrofida --- */}
-              {otherPlayers.map((player) => {
-                const pos = PLAYER_POSITIONS[player.id];
-                if (!pos) return null;
-
-                return (
-                  <div key={player.id} style={{
-                    position: 'absolute',
-                    ...pos,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    zIndex: 5, gap: '2px',
-                  }}>
-                    {/* Avatar + kichik kartalar */}
-                    <div style={{
-                      position: 'relative',
-                      width: '34px', height: '34px', borderRadius: '50%',
-                      background: 'rgba(0,0,0,0.55)',
-                      backdropFilter: 'blur(6px)',
-                      border: player.score > 0
-                        ? '2px solid #ffd700'
-                        : '2px solid rgba(255,255,255,0.12)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '15px',
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
-                    }}>
-                      {player.avatar}
-                      {/* Online dot */}
-                      <div style={{
-                        position: 'absolute', bottom: '-1px', right: '-1px',
-                        width: '8px', height: '8px', borderRadius: '50%',
-                        background: '#2ed573',
-                        border: '2px solid rgba(10,10,15,0.8)',
-                      }} />
-                    </div>
-
-                    {/* Ism */}
-                    <div style={{
-                      fontFamily: 'var(--font-body)', fontSize: '8px',
-                      color: 'rgba(255,255,255,0.6)',
-                      maxWidth: '50px', overflow: 'hidden',
-                      textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center',
-                      textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-                    }}>
-                      {player.name}
-                    </div>
-
-                    {/* Score */}
-                    {player.score > 0 && (
-                      <div style={{
-                        fontFamily: 'var(--font-display)', fontSize: '8px',
-                        fontWeight: 700, color: '#ffd700',
-                        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-                      }}>
-                        {player.score}⭐
-                      </div>
-                    )}
-
-                    {/* Kichik kartalar (qo'lda nechta) */}
-                    <div style={{ display: 'flex', gap: '1px', marginTop: '1px' }}>
-                      {Array.from({ length: Math.min(3, player.cards) }).map((_, j) => (
-                        <div key={j} style={{
-                          width: '6px', height: '9px', borderRadius: '1.5px',
-                          background: 'linear-gradient(135deg, #3742fa, #2d34a8)',
-                          border: '0.5px solid rgba(255,255,255,0.12)',
-                        }} />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
 
             {/* ====== PASTKI QISM — 7 TA KARTA ====== */}
@@ -576,12 +505,11 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               flexShrink: 0, width: '100%',
               padding: '6px 8px',
               paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
-              background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 80%, transparent 100%)',
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 80%, transparent 100%)',
             }}>
-              {/* Sarlavha */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: '5px', padding: '0 2px',
+                marginBottom: '4px', padding: '0 2px',
               }}>
                 <span style={{
                   fontFamily: 'var(--font-display)', fontSize: '9px',
@@ -597,16 +525,14 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 </span>
               </div>
 
-              {/* 7 ta karta — FLEX, SCROLL YO'Q */}
               <div style={{
                 display: 'flex', gap: '5px',
                 justifyContent: 'center', width: '100%',
                 maxWidth: '360px', margin: '0 auto',
               }}>
                 {playerCards.map((card, i) => {
-                  const isInventory = typeof card.id === 'string';
-                  const isSelected = selectedBlue === card.id;
-
+                  const isInv = typeof card.id === 'string';
+                  const isSel = selectedBlue === card.id;
                   return (
                     <button
                       key={card.id}
@@ -617,16 +543,14 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                         height: '68px', borderRadius: '8px', border: 'none',
                         padding: '4px 2px',
                         cursor: selectedBlue ? 'default' : 'pointer',
-                        opacity: selectedBlue && !isSelected ? 0.2 : 1,
-                        transform: isSelected ? 'translateY(-10px) scale(1.12)' : 'translateY(0)',
+                        opacity: selectedBlue && !isSel ? 0.2 : 1,
+                        transform: isSel ? 'translateY(-10px) scale(1.12)' : 'translateY(0)',
                         transition: 'all 0.3s ease',
-                        background: isSelected
+                        background: isSel
                           ? 'linear-gradient(135deg, #3742fa, #5352ed)'
                           : 'linear-gradient(135deg, #16192e, #1a1e3a)',
-                        border: isSelected
-                          ? '2px solid #5352ed'
-                          : '1px solid rgba(255,255,255,0.08)',
-                        boxShadow: isSelected
+                        border: isSel ? '2px solid #5352ed' : '1px solid rgba(255,255,255,0.08)',
+                        boxShadow: isSel
                           ? '0 6px 20px rgba(55,66,250,0.4)'
                           : '0 2px 6px rgba(0,0,0,0.3)',
                         display: 'flex', flexDirection: 'column',
@@ -635,7 +559,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                         animation: `fadeUp 0.25s ease ${i * 0.04}s forwards`,
                       }}
                     >
-                      {isInventory && (
+                      {isInv && (
                         <div style={{
                           position: 'absolute', top: '2px', right: '2px',
                           width: '10px', height: '10px', borderRadius: '50%',
@@ -674,19 +598,18 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             padding: '10px', overflow: 'auto',
-            animation: 'fadeUp 0.3s ease forwards',
+            animation: 'fadeUp 0.3s ease',
           }}>
             <div style={{
               fontFamily: 'var(--font-display)', fontSize: '11px',
-              color: 'rgba(255,255,255,0.5)', letterSpacing: '1px',
-              marginBottom: '8px',
+              color: 'rgba(255,255,255,0.5)', letterSpacing: '1px', marginBottom: '8px',
             }}>
               🗳 OVOZ BERILMOQDA...
             </div>
 
             <div style={{
               padding: '8px 12px', borderRadius: '10px',
-              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+              background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
               border: '1px solid rgba(255,0,110,0.25)',
               textAlign: 'center', marginBottom: '10px', maxWidth: '320px', width: '100%',
             }}>
@@ -715,7 +638,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 </div>
               )}
               {opponentPlays.map((card, i) => {
-                const opp = otherPlayers[i];
+                const opp = others[i];
                 return (
                   <div key={card.id} style={{
                     padding: '8px', borderRadius: '8px',
@@ -741,12 +664,12 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
-            animation: 'fadeUp 0.4s ease forwards',
+            animation: 'fadeUp 0.4s ease',
           }}>
             {winner && (
               <div style={{
                 padding: '14px 20px', borderRadius: '14px',
-                background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(12px)',
+                background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(12px)',
                 border: '1.5px solid rgba(255,215,0,0.3)',
                 textAlign: 'center', marginBottom: '10px',
                 boxShadow: '0 8px 28px rgba(255,215,0,0.12)',
@@ -762,7 +685,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             )}
 
             <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '12px' }}>
-              {sortedPlayers.slice(0, 3).map((p, i) => (
+              {sorted.slice(0, 3).map((p, i) => (
                 <div key={p.id} style={{
                   padding: '5px 10px', borderRadius: '8px',
                   background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)',
@@ -805,6 +728,83 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           50% { transform: scale(1.06); }
         }
       `}</style>
+    </div>
+  );
+}
+
+// ================================================================
+// STUL KOMPONENTI — o'yinchi stulda o'tirgan ko'rinishda
+// ================================================================
+function Seat({ player }: { player?: Player }) {
+  if (!player) return null;
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+    }}>
+      {/* Stul + Avatar */}
+      <div style={{
+        position: 'relative',
+        width: '40px', height: '40px', borderRadius: '50%',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(6px)',
+        border: player.score > 0
+          ? '2.5px solid #ffd700'
+          : '2px solid rgba(255,255,255,0.15)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '18px',
+        boxShadow: player.score > 0
+          ? '0 0 12px rgba(255,215,0,0.3), 0 2px 8px rgba(0,0,0,0.4)'
+          : '0 2px 8px rgba(0,0,0,0.4)',
+      }}>
+        {player.avatar}
+
+        {/* Online dot */}
+        <div style={{
+          position: 'absolute', bottom: '-1px', right: '-1px',
+          width: '8px', height: '8px', borderRadius: '50%',
+          background: '#2ed573',
+          border: '2px solid rgba(10,10,15,0.8)',
+        }} />
+
+        {/* Kichik kartalar (qo'lda) */}
+        <div style={{
+          position: 'absolute', bottom: '-6px', left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex', gap: '1px',
+        }}>
+          {Array.from({ length: Math.min(3, player.cards) }).map((_, j) => (
+            <div key={j} style={{
+              width: '5px', height: '8px', borderRadius: '1px',
+              background: 'linear-gradient(135deg, #3742fa, #2d34a8)',
+              border: '0.5px solid rgba(255,255,255,0.15)',
+            }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Ism */}
+      <div style={{
+        fontFamily: 'var(--font-body)', fontSize: '8px',
+        color: 'rgba(255,255,255,0.65)',
+        maxWidth: '50px', overflow: 'hidden',
+        textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center',
+        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+        marginTop: '4px',
+      }}>
+        {player.name}
+      </div>
+
+      {/* Score */}
+      {player.score > 0 && (
+        <div style={{
+          fontFamily: 'var(--font-display)', fontSize: '8px',
+          fontWeight: 700, color: '#ffd700',
+          textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+        }}>
+          {player.score}⭐
+        </div>
+      )}
     </div>
   );
 }
