@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { hapticImpact, hapticSuccess } from '@/config/telegram';
 
-// ============= INTERFEYSLAR =============
+// ============= TYPES =============
 interface GameScreenProps {
   onNavigate: (tab: string) => void;
   onGameEnd: () => void;
@@ -22,7 +22,7 @@ interface Player {
   cards: number;
 }
 
-// ============= KARTALAR =============
+// ============= DATA =============
 const RED_CARDS: Card[] = [
   { id: 1, text: 'Men uydan chiqishni yomon ko\'raman, chunki...' },
   { id: 2, text: 'Eng yomon sovg\'a bu...' },
@@ -38,29 +38,28 @@ const BLUE_CARDS_POOL: Card[] = [
   { id: 101, text: 'WiFi parolini unutganingizda' },
   { id: 102, text: 'Nonushtasiz uydan chiqqanman' },
   { id: 103, text: 'Sport zalga borganim (1 kun)' },
-  { id: 104, text: 'Kredit karta hisobimni ko\'rganimda' },
-  { id: 105, text: 'Men ertaga boshlayman dedim... 3 yil oldin' },
-  { id: 106, text: 'Telefonim 1% da va zaryadka topilmaydi' },
-  { id: 107, text: 'Do\'stim 5 daqiqaga chiqaman deganiga 2 soat' },
-  { id: 108, text: 'Yangi yil qarorlarim (1 hafta yashagan)' },
-  { id: 109, text: 'Onamning "Men sen yoshligingda" hikoyasi' },
-  { id: 110, text: 'Instagram da 2 soat "tezgina" qarab chiqish' },
-  { id: 111, text: 'Kuryer "Yetib keldim" deganda uyda emasligim' },
-  { id: 112, text: 'Pullarimni tejayapman deb narsa sotib olganman' },
-  { id: 113, text: 'Pazandalikda tajriba va oshxonani yoqish' },
-  { id: 114, text: 'GPS ishonmayman deb adashib ketishim' },
-  { id: 115, text: 'Ertalab 6 da turganim va zalga bormaganim' },
+  { id: 104, text: 'Kredit karta hisobim' },
+  { id: 105, text: 'Ertaga boshlayman... 3 yil oldin' },
+  { id: 106, text: 'Telefonim 1% da' },
+  { id: 107, text: 'Do\'stim 5 daqiqaga deganiga 2 soat' },
+  { id: 108, text: 'Yangi yil qarorlarim (1 hafta)' },
+  { id: 109, text: 'Onamning "Yoshligingda" hikoyasi' },
+  { id: 110, text: 'Instagram 2 soat "tezgina"' },
+  { id: 111, text: 'Kuryer "Yetib keldim" uyda emas' },
+  { id: 112, text: 'Tejayman deb narsa sotib olganman' },
+  { id: 113, text: 'Pazandalik tajriba va oshxona yonishi' },
+  { id: 114, text: 'GPS ishonmayman deb adashish' },
+  { id: 115, text: 'Ertalab 6 da turgan va zalga bormagan' },
 ];
 
 const INVENTORY_POOL: Card[] = [
   { id: 'inv1', text: 'WiFi yo\'qolgan paytda qo\'rquv', category: 'tech', power: 7 },
-  { id: 'inv2', text: 'Do\'st bilan kechki ovqat va sirlar', category: 'life', power: 6 },
-  { id: 'inv3', text: 'Barchaga yolg\'on gapirib chet elga ketish', category: 'wild', power: 9 },
-  { id: 'inv4', text: 'Buvining maslahati bilan hayotni yaxshilash', category: 'national', power: 8 },
-  { id: 'inv5', text: 'Telefon yo\'qolganida tinchlik topish', category: 'tech', power: 7 },
+  { id: 'inv2', text: 'Do\'st bilan kechki ovqat', category: 'life', power: 6 },
+  { id: 'inv3', text: 'Barchaga yolg\'on gapirib ketish', category: 'wild', power: 9 },
+  { id: 'inv4', text: 'Buvining maslahati', category: 'national', power: 8 },
+  { id: 'inv5', text: 'Telefon yo\'qolganida tinchlik', category: 'tech', power: 7 },
 ];
 
-// ============= YORDAMCHI =============
 function shuffle<T>(arr: T[]): T[] {
   const s = [...arr];
   for (let i = s.length - 1; i > 0; i--) {
@@ -82,7 +81,7 @@ const PLAYERS_INIT: Player[] = [
 
 const TOTAL_ROUNDS = 5;
 
-// ============= ASOSIY KOMPONENT =============
+// ============= COMPONENT =============
 export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   type Phase = 'waiting' | 'showQuestion' | 'playing' | 'voting' | 'result';
 
@@ -92,6 +91,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   const [roundTimer, setRoundTimer] = useState(30);
   const [countdown, setCountdown] = useState(3);
   const [isTimeWarning, setIsTimeWarning] = useState(false);
+  const [bgLoaded, setBgLoaded] = useState(false);
 
   const [players, setPlayers] = useState<Player[]>(() =>
     PLAYERS_INIT.map((p) => ({ ...p, score: 0 }))
@@ -111,9 +111,18 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   const [opponentPlays, setOpponentPlays] = useState<Card[]>([]);
   const [winner, setWinner] = useState<Player | null>(null);
 
-  // ==========================================
-  // RAUND BOSHLASH
-  // ==========================================
+  // ====== RASM YUKLASH TEKSHIRISH ======
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setBgLoaded(true);
+    img.onerror = () => {
+      console.warn('Fon rasm yuklanmadi: /assets/game-bg.png');
+      setBgLoaded(false);
+    };
+    img.src = '/assets/game-bg.png';
+  }, []);
+
+  // ====== RAUND BOSHLASH ======
   const startRound = useCallback(() => {
     const available = RED_CARDS.filter((c) => !usedRedIds.has(c.id as number));
     const pool = available.length > 0 ? available : RED_CARDS;
@@ -141,34 +150,22 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
   useEffect(() => { startRound(); }, []); // eslint-disable-line
 
-  // ==========================================
-  // COUNTDOWN (3-2-1)
-  // ==========================================
+  // ====== COUNTDOWN ======
   useEffect(() => {
     if (phase !== 'waiting') return;
-    if (countdown <= 0) {
-      setPhase('showQuestion');
-      return;
-    }
-    const t = setTimeout(() => {
-      hapticImpact('light');
-      setCountdown((c) => c - 1);
-    }, 800);
+    if (countdown <= 0) { setPhase('showQuestion'); return; }
+    const t = setTimeout(() => { hapticImpact('light'); setCountdown((c) => c - 1); }, 800);
     return () => clearTimeout(t);
   }, [countdown, phase]);
 
-  // ==========================================
-  // SAVOLNI KO'RSATISH (1.5 soniya)
-  // ==========================================
+  // ====== SAVOL KO'RSATISH ======
   useEffect(() => {
     if (phase !== 'showQuestion') return;
     const t = setTimeout(() => setPhase('playing'), 1500);
     return () => clearTimeout(t);
   }, [phase]);
 
-  // ==========================================
-  // TAYMER
-  // ==========================================
+  // ====== TAYMER ======
   useEffect(() => {
     if (phase !== 'playing') return;
     if (roundTimer <= 0) {
@@ -183,9 +180,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     return () => clearInterval(t);
   }, [roundTimer, phase]); // eslint-disable-line
 
-  // ==========================================
-  // KO'K KARTA TANLASH
-  // ==========================================
+  // ====== KARTA TANLASH ======
   const handleSelectBlue = (id: number | string) => {
     if (phase !== 'playing') return;
     hapticImpact('medium');
@@ -201,93 +196,97 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     }, 1200);
   };
 
-  // ==========================================
-  // OVOZ BERISH (simulyatsiya)
-  // ==========================================
+  // ====== OVOZ BERISH ======
   useEffect(() => {
     if (phase !== 'voting') return;
     const t = setTimeout(() => {
-      const allPlayers = players.filter((p) => p.id !== 'me');
-      const randomWinner = allPlayers[Math.floor(Math.random() * allPlayers.length)];
-      setPlayers((prev) =>
-        prev.map((p) =>
-          p.id === randomWinner.id ? { ...p, score: p.score + 1 } : p
-        )
-      );
-      setWinner(randomWinner);
+      const allP = players.filter((p) => p.id !== 'me');
+      const rw = allP[Math.floor(Math.random() * allP.length)];
+      setPlayers((prev) => prev.map((p) => p.id === rw.id ? { ...p, score: p.score + 1 } : p));
+      setWinner(rw);
       hapticSuccess();
       setPhase('result');
     }, 3000);
     return () => clearTimeout(t);
   }, [phase]); // eslint-disable-line
 
-  // ==========================================
-  // KEYINGI RAUND
-  // ==========================================
+  // ====== KEYINGI RAUND ======
   const handleNextRound = () => {
     hapticImpact('medium');
-    if (round >= TOTAL_ROUNDS) {
-      onGameEnd();
-      return;
-    }
+    if (round >= TOTAL_ROUNDS) { onGameEnd(); return; }
     setRound((r) => r + 1);
     startRound();
   };
 
-  // ==========================================
-  // YORDAMCHI
-  // ==========================================
+  // ====== YORDAMCHI ======
   const timerColor = roundTimer <= 10 ? '#ff4757' : roundTimer <= 20 ? '#ffa502' : '#2ed573';
   const selectedCardText = [...playerCards, ...opponentPlays, ...BLUE_CARDS_POOL]
     .find((c) => c.id === selectedBlue)?.text || '';
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
-  // ==========================================
+  // ================================================
   // RENDIRLASH
-  // ==========================================
+  // ================================================
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: '100dvh',
+      height: '100dvh', width: '100%',
       position: 'relative', overflow: 'hidden',
+      background: '#0b0b14',
     }}>
 
-      {/* ====== FON RASMI — public/assets/game-bg.png ====== */}
-      <div style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: 'url(/assets/game-bg.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        zIndex: 0,
-      }} />
+      {/* ====== FON: RASM yoki GRADIENT (fallback) ====== */}
+      {bgLoaded ? (
+        <>
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 0,
+            backgroundImage: 'url(/assets/game-bg.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }} />
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 1,
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)',
+            pointerEvents: 'none',
+          }} />
+        </>
+      ) : (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 0,
+          background: `
+            radial-gradient(ellipse at 25% 75%, rgba(255,0,110,0.18) 0%, transparent 55%),
+            radial-gradient(ellipse at 75% 25%, rgba(55,66,250,0.18) 0%, transparent 55%),
+            radial-gradient(ellipse at 50% 50%, rgba(20,20,40,1) 0%, #0b0b14 100%)
+          `,
+        }} />
+      )}
 
-      {/* Qoraytirish qatlami — rasm ustidan o'qilishi uchun */}
+      {/* Noise overlay */}
       <div style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.75) 100%)',
-        zIndex: 1,
-        pointerEvents: 'none',
+        position: 'fixed', inset: 0, zIndex: 2,
+        opacity: 0.03, pointerEvents: 'none',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
       }} />
 
       {/* ====== HEADER ====== */}
       <div style={{
-        position: 'relative', zIndex: 10,
+        position: 'relative', zIndex: 20,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 14px',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
-        background: 'rgba(0,0,0,0.45)',
-        backdropFilter: 'blur(6px)',
+        padding: '8px 12px',
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        minHeight: '44px',
       }}>
         <button
           onClick={() => { hapticImpact('light'); onGameEnd(); }}
           style={{
-            width: '32px', height: '32px', borderRadius: '8px',
+            width: '30px', height: '30px', borderRadius: '8px',
             background: 'rgba(255,255,255,0.1)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: '#fff', fontSize: '14px',
+            cursor: 'pointer', color: '#fff', fontSize: '14px', fontWeight: 700,
           }}
         >
           ←
@@ -295,279 +294,394 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
         <div style={{ textAlign: 'center' }}>
           <div style={{
-            fontFamily: 'var(--font-display)', fontSize: '14px',
+            fontFamily: 'var(--font-display)', fontSize: '13px',
             fontWeight: 700, color: '#fff', letterSpacing: '2px',
           }}>
             ROUND {round}/{TOTAL_ROUNDS}
           </div>
           <div style={{
-            fontFamily: 'var(--font-body)', fontSize: '9px',
-            color: 'rgba(255,255,255,0.4)', marginTop: '2px',
+            fontFamily: 'var(--font-body)', fontSize: '8px',
+            color: 'rgba(255,255,255,0.4)', marginTop: '1px', letterSpacing: '0.5px',
           }}>
             {phase === 'waiting' ? 'Tayyorlanmoqda...' :
-             phase === 'showQuestion' ? 'Savol ochilmoqda...' :
+             phase === 'showQuestion' ? 'Savol...' :
              phase === 'playing' ? 'Karta tanlang' :
-             phase === 'voting' ? 'Ovoz berilmoqda...' : 'Natija'}
+             phase === 'voting' ? 'Ovoz berish...' : 'Natija'}
           </div>
         </div>
 
         <div style={{
-          width: '36px', height: '36px', borderRadius: '50%',
-          background: `rgba(${roundTimer <= 10 ? '255,71,87' : roundTimer <= 20 ? '255,165,0' : '46,213,115'},0.15)`,
-          border: `2px solid ${phase === 'playing' ? timerColor : 'rgba(255,255,255,0.15)'}`,
+          width: '32px', height: '32px', borderRadius: '50%',
+          background: phase === 'playing'
+            ? `rgba(${roundTimer <= 10 ? '255,71,87' : roundTimer <= 20 ? '255,165,0' : '46,213,115'},0.15)`
+            : 'rgba(255,255,255,0.05)',
+          border: `2px solid ${phase === 'playing' ? timerColor : 'rgba(255,255,255,0.1)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 700,
-          color: phase === 'playing' ? timerColor : 'rgba(255,255,255,0.3)',
+          fontFamily: 'var(--font-display)', fontSize: '12px', fontWeight: 700,
+          color: phase === 'playing' ? timerColor : 'rgba(255,255,255,0.25)',
           transition: 'all 0.3s ease',
-          animation: isTimeWarning && phase === 'playing' ? 'pulse 0.5s ease infinite' : 'none',
+          animation: isTimeWarning && phase === 'playing' ? 'pulse 0.5s infinite' : 'none',
         }}>
           {phase === 'playing' ? roundTimer : '⏱'}
         </div>
       </div>
 
-      {/* ====== ASOSIY O'YIN MAYDONI ====== */}
+      {/* ====== ASOSIY MAYDON ====== */}
       <div style={{
-        position: 'relative', zIndex: 5, flex: 1,
+        position: 'relative', zIndex: 10, flex: 1,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'center', padding: '10px',
-        overflow: 'hidden',
+        justifyContent: phase === 'playing' ? 'flex-start' : 'center',
+        padding: '6px 8px',
+        overflow: 'hidden', minHeight: 0,
       }}>
 
-        {/* ---------- COUNTDOWN (fon rasm ko'rinadi) ---------- */}
+        {/* ======== COUNTDOWN ======== */}
         {phase === 'waiting' && (
           <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             animation: 'fadeUp 0.3s ease forwards',
           }}>
             <div style={{
-              width: '80px', height: '80px', borderRadius: '50%',
-              background: 'rgba(0,0,0,0.5)',
+              width: '70px', height: '70px', borderRadius: '50%',
+              background: 'rgba(0,0,0,0.55)',
               border: '3px solid rgba(255,0,110,0.5)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'var(--font-display)', fontSize: '36px',
+              fontFamily: 'var(--font-display)', fontSize: '32px',
               fontWeight: 700, color: '#ff006e',
               animation: 'pulse 0.8s ease infinite',
               backdropFilter: 'blur(10px)',
+              boxShadow: '0 0 30px rgba(255,0,110,0.2)',
             }}>
               {countdown > 0 ? countdown : '🎯'}
             </div>
             <div style={{
-              marginTop: '12px',
-              fontFamily: 'var(--font-display)', fontSize: '14px',
-              color: 'rgba(255,255,255,0.6)', letterSpacing: '2px',
-              textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+              marginTop: '10px', fontFamily: 'var(--font-display)',
+              fontSize: '13px', color: 'rgba(255,255,255,0.55)', letterSpacing: '2px',
+              textShadow: '0 2px 8px rgba(0,0,0,0.6)',
             }}>
               RAUND {round}
             </div>
           </div>
         )}
 
-        {/* ---------- SAVOL OCHILISHI ---------- */}
+        {/* ======== SAVOL OCHILISHI ======== */}
         {phase === 'showQuestion' && (
           <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             animation: 'fadeUp 0.4s ease forwards',
           }}>
             <div style={{
-              padding: '20px 24px', borderRadius: '16px',
+              padding: '16px 20px', borderRadius: '14px',
               background: 'rgba(0,0,0,0.6)',
               backdropFilter: 'blur(12px)',
               border: '1.5px solid rgba(255,0,110,0.4)',
-              maxWidth: '320px', textAlign: 'center',
-              boxShadow: '0 8px 32px rgba(255,0,110,0.2)',
+              maxWidth: '300px', textAlign: 'center',
+              boxShadow: '0 8px 30px rgba(255,0,110,0.2)',
             }}>
-              <div style={{ fontSize: '28px', marginBottom: '10px' }}>🔴</div>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔴</div>
               <div style={{
-                fontFamily: 'var(--font-display)', fontSize: '16px',
-                fontWeight: 700, color: '#fff', lineHeight: 1.5,
+                fontFamily: 'var(--font-display)', fontSize: '14px',
+                fontWeight: 700, color: '#fff', lineHeight: 1.4,
               }}>
                 {currentRed.text}
               </div>
             </div>
             <div style={{
-              marginTop: '12px',
-              fontFamily: 'var(--font-body)', fontSize: '11px',
-              color: 'rgba(255,255,255,0.5)',
+              marginTop: '10px', fontFamily: 'var(--font-body)',
+              fontSize: '10px', color: 'rgba(255,255,255,0.45)',
               textShadow: '0 2px 6px rgba(0,0,0,0.5)',
             }}>
-              Eng mos javob kartasini tanlang...
+              Eng mos javobni tanlang...
             </div>
           </div>
         )}
 
-        {/* ---------- O'YIN: SAVOL + O'YINCHILAR ---------- */}
+        {/* ======== O'YIN FAZASI ======== */}
         {phase === 'playing' && (
-          <>
-            {/* Savol kichkina */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            width: '100%', height: '100%', justifyContent: 'space-between',
+          }}>
+            {/* --- YUQORI: Savol + O'yinchilar --- */}
             <div style={{
-              padding: '10px 16px', borderRadius: '12px',
-              background: 'rgba(0,0,0,0.5)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,0,110,0.25)',
-              maxWidth: '300px', textAlign: 'center',
-              marginBottom: '12px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              width: '100%', gap: '4px', flexShrink: 0,
             }}>
+              {/* Savol */}
               <div style={{
-                fontFamily: 'var(--font-display)', fontSize: '13px',
-                fontWeight: 700, color: '#fff', lineHeight: 1.4,
+                padding: '8px 14px', borderRadius: '10px',
+                background: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,0,110,0.3)',
+                maxWidth: '320px', textAlign: 'center',
+                boxShadow: '0 4px 16px rgba(255,0,110,0.1)',
               }}>
-                🔴 {currentRed.text}
+                <div style={{
+                  fontFamily: 'var(--font-display)', fontSize: '12px',
+                  fontWeight: 700, color: '#fff', lineHeight: 1.3,
+                }}>
+                  🔴 {currentRed.text}
+                </div>
+              </div>
+
+              {/* Qizil kartalar stolda (yopiq) */}
+              <div style={{
+                display: 'flex', gap: '4px', justifyContent: 'center',
+                marginTop: '4px',
+              }}>
+                {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => {
+                  const isRevealed = i + 1 < round;
+                  const isCurrent = i + 1 === round;
+                  return (
+                    <div key={i} style={{
+                      width: '32px', height: '44px', borderRadius: '6px',
+                      background: isRevealed
+                        ? 'rgba(46,213,115,0.2)'
+                        : isCurrent
+                          ? 'linear-gradient(135deg, #ff006e, #cc0044)'
+                          : 'linear-gradient(135deg, #cc0033, #880022)',
+                      border: isCurrent
+                        ? '2px solid #ffd700'
+                        : isRevealed
+                          ? '1px solid rgba(46,213,115,0.3)'
+                          : '1px solid rgba(255,255,255,0.1)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: isRevealed ? '12px' : '9px',
+                      color: isRevealed ? '#2ed573' : 'rgba(255,255,255,0.6)',
+                      fontFamily: 'var(--font-display)', fontWeight: 700,
+                      boxShadow: isCurrent ? '0 0 12px rgba(255,215,0,0.3)' : 'none',
+                    }}>
+                      {isRevealed ? '✓' : i + 1}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* O'yinchilar — 2 qator */}
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: '4px',
+                justifyContent: 'center', marginTop: '4px',
+                maxWidth: '320px',
+              }}>
+                {players.filter((p) => p.id !== 'me').map((player) => (
+                  <div key={player.id} style={{
+                    display: 'flex', alignItems: 'center', gap: '3px',
+                    padding: '3px 6px', borderRadius: '16px',
+                    background: 'rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(4px)',
+                    border: player.score > 0
+                      ? '1px solid rgba(255,215,0,0.3)'
+                      : '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                    <span style={{ fontSize: '12px' }}>{player.avatar}</span>
+                    <span style={{
+                      fontFamily: 'var(--font-body)', fontSize: '8px',
+                      color: 'rgba(255,255,255,0.6)',
+                      maxWidth: '40px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {player.name}
+                    </span>
+                    {player.score > 0 && (
+                      <span style={{
+                        fontFamily: 'var(--font-display)', fontSize: '8px',
+                        fontWeight: 700, color: '#ffd700',
+                      }}>
+                        {player.score}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* O'yinchilar — stol atrofida */}
+            {/* --- PASTKI: 7 ta KARTA (scroll yo'q!) --- */}
             <div style={{
-              position: 'relative', width: '100%', maxWidth: '340px',
-              height: '160px', marginBottom: '8px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              width: '100%', flexShrink: 0,
+              paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
             }}>
-              {players.filter((p) => p.id !== 'me').map((player, i) => {
-                const positions = [
-                  { top: '0%', left: '50%', transform: 'translateX(-50%)' },
-                  { top: '20%', left: '2%' },
-                  { top: '20%', right: '2%' },
-                  { top: '55%', left: '8%' },
-                  { top: '55%', right: '8%' },
-                  { top: '10%', left: '22%' },
-                ];
-                const pos = positions[i] || positions[0];
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                width: '100%', maxWidth: '340px', marginBottom: '5px', padding: '0 2px',
+              }}>
+                <span style={{
+                  fontFamily: 'var(--font-display)', fontSize: '9px',
+                  fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '1px',
+                }}>
+                  🔵 KARTALARINGIZ
+                </span>
+                <span style={{
+                  fontFamily: 'var(--font-display)', fontSize: '9px',
+                  fontWeight: 700, color: '#3742fa',
+                }}>
+                  {playerCards.length}
+                </span>
+              </div>
 
-                return (
-                  <div key={player.id} style={{
-                    position: 'absolute', ...pos,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
-                  }}>
-                    <div style={{
-                      width: '36px', height: '36px', borderRadius: '50%',
-                      background: 'rgba(0,0,0,0.5)',
-                      backdropFilter: 'blur(4px)',
-                      border: player.score > 0
-                        ? '2px solid #ffd700'
-                        : '2px solid rgba(255,255,255,0.15)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '16px', position: 'relative',
-                    }}>
-                      {player.avatar}
+              {/* 7 ta karta — flex-wrap yoki grid, SCROLL YO'Q */}
+              <div style={{
+                display: 'flex', gap: '5px',
+                justifyContent: 'center',
+                flexWrap: 'nowrap',
+                width: '100%',
+                maxWidth: '350px',
+                padding: '0 2px',
+              }}>
+                {playerCards.map((card, i) => {
+                  const isInventory = typeof card.id === 'string';
+                  const isSelected = selectedBlue === card.id;
+
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => handleSelectBlue(card.id)}
+                      disabled={selectedBlue !== null}
+                      style={{
+                        flex: '1 1 0',
+                        minWidth: 0,
+                        maxWidth: '50px',
+                        height: '72px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        padding: '4px 2px',
+                        cursor: selectedBlue ? 'default' : 'pointer',
+                        opacity: selectedBlue && !isSelected ? 0.25 : 1,
+                        transform: isSelected ? 'translateY(-8px) scale(1.1)' : 'translateY(0)',
+                        transition: 'all 0.3s ease',
+                        background: isSelected
+                          ? 'linear-gradient(135deg, #3742fa, #5352ed)'
+                          : 'linear-gradient(135deg, #16192e, #1a1e3a)',
+                        border: isSelected
+                          ? '2px solid #5352ed'
+                          : '1px solid rgba(255,255,255,0.1)',
+                        boxShadow: isSelected
+                          ? '0 6px 20px rgba(55,66,250,0.35)'
+                          : '0 2px 6px rgba(0,0,0,0.3)',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                        position: 'relative',
+                        animation: `fadeUp 0.25s ease ${i * 0.04}s forwards`,
+                      }}
+                    >
+                      {isInventory && (
+                        <div style={{
+                          position: 'absolute', top: '2px', right: '2px',
+                          width: '10px', height: '10px', borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #00b4d8, #0096c7)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '5px', color: '#fff', fontWeight: 700,
+                        }}>
+                          ★
+                        </div>
+                      )}
                       <div style={{
-                        position: 'absolute', bottom: '-1px', right: '-1px',
-                        width: '8px', height: '8px', borderRadius: '50%',
-                        background: '#2ed573',
-                        border: '2px solid rgba(10,10,15,0.8)',
-                      }} />
-                    </div>
-                    <div style={{
-                      fontFamily: 'var(--font-body)', fontSize: '9px',
-                      color: 'rgba(255,255,255,0.7)',
-                      maxWidth: '55px', overflow: 'hidden',
-                      textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center',
-                      textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-                    }}>
-                      {player.name}
-                    </div>
-                    {player.score > 0 && (
-                      <div style={{
-                        fontFamily: 'var(--font-display)', fontSize: '10px',
-                        fontWeight: 700, color: '#ffd700',
-                        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                        fontFamily: 'var(--font-body)', fontSize: '7px',
+                        fontWeight: 600, color: '#fff', lineHeight: 1.2,
+                        textAlign: 'center',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 4,
+                        WebkitBoxOrient: 'vertical',
                       }}>
-                        {player.score}⭐
+                        {card.text}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {card.power && (
+                        <div style={{
+                          position: 'absolute', bottom: '2px',
+                          fontFamily: 'var(--font-display)', fontSize: '6px',
+                          color: 'rgba(255,255,255,0.25)',
+                        }}>
+                          ⚡{card.power}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </>
+          </div>
         )}
 
-        {/* ---------- OVOZ BERISH ---------- */}
+        {/* ======== OVOZ BERISH ======== */}
         {phase === 'voting' && (
           <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             animation: 'fadeUp 0.3s ease forwards', width: '100%', maxWidth: '340px',
+            overflow: 'auto', flex: 1, padding: '6px 0',
           }}>
             <div style={{
-              fontFamily: 'var(--font-display)', fontSize: '12px',
-              color: 'rgba(255,255,255,0.6)', letterSpacing: '1px',
-              marginBottom: '10px',
+              fontFamily: 'var(--font-display)', fontSize: '11px',
+              color: 'rgba(255,255,255,0.55)', letterSpacing: '1px',
+              marginBottom: '8px',
               textShadow: '0 2px 6px rgba(0,0,0,0.5)',
             }}>
               🗳 OVOZ BERILMOQDA...
             </div>
 
-            {/* Savol */}
             <div style={{
-              padding: '10px 14px', borderRadius: '10px',
-              background: 'rgba(0,0,0,0.5)',
-              backdropFilter: 'blur(8px)',
+              padding: '8px 12px', borderRadius: '10px',
+              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
               border: '1px solid rgba(255,0,110,0.25)',
-              textAlign: 'center', marginBottom: '12px', width: '100%',
+              textAlign: 'center', marginBottom: '10px', width: '100%',
             }}>
               <div style={{
-                fontFamily: 'var(--font-display)', fontSize: '12px',
+                fontFamily: 'var(--font-display)', fontSize: '11px',
                 fontWeight: 700, color: '#ff4757',
               }}>
                 🔴 {currentRed.text}
               </div>
             </div>
 
-            {/* Barcha javoblar */}
             <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '8px', width: '100%',
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '6px', width: '100%',
             }}>
               {selectedBlue && (
                 <div style={{
-                  padding: '10px', borderRadius: '10px',
-                  background: 'rgba(0,0,0,0.5)',
-                  backdropFilter: 'blur(8px)',
+                  padding: '8px', borderRadius: '8px',
+                  background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
                   border: '1.5px solid rgba(55,66,250,0.5)',
                   textAlign: 'center',
                 }}>
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: '9px',
-                    color: '#5352ed', marginBottom: '4px',
-                  }}>
+                  <div style={{ fontFamily: 'var(--font-body)', fontSize: '8px', color: '#5352ed', marginBottom: '3px' }}>
                     SIZ
                   </div>
                   <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: '11px',
-                    fontWeight: 600, color: '#fff', lineHeight: 1.3,
+                    fontFamily: 'var(--font-body)', fontSize: '9px',
+                    fontWeight: 600, color: '#fff', lineHeight: 1.2,
                   }}>
                     {selectedCardText}
                   </div>
                 </div>
               )}
 
-              {opponentPlays.map((card, i) => (
-                <div key={card.id} style={{
-                  padding: '10px', borderRadius: '10px',
-                  background: 'rgba(0,0,0,0.4)',
-                  backdropFilter: 'blur(6px)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  textAlign: 'center',
-                  animation: `fadeUp 0.3s ease ${i * 0.1}s forwards`,
-                  opacity: 0,
-                }}>
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: '9px',
-                    color: 'rgba(255,255,255,0.5)', marginBottom: '4px',
+              {opponentPlays.map((card, i) => {
+                const opp = players.filter((p) => p.id !== 'me')[i];
+                return (
+                  <div key={card.id} style={{
+                    padding: '8px', borderRadius: '8px',
+                    background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    textAlign: 'center',
+                    animation: `fadeUp 0.3s ease ${i * 0.08}s forwards`, opacity: 0,
                   }}>
-                    {players.filter((p) => p.id !== 'me')[i]?.avatar}{' '}
-                    {players.filter((p) => p.id !== 'me')[i]?.name}
+                    <div style={{ fontFamily: 'var(--font-body)', fontSize: '8px', color: 'rgba(255,255,255,0.4)', marginBottom: '3px' }}>
+                      {opp?.avatar} {opp?.name}
+                    </div>
+                    <div style={{
+                      fontFamily: 'var(--font-body)', fontSize: '9px',
+                      fontWeight: 600, color: 'rgba(255,255,255,0.8)', lineHeight: 1.2,
+                    }}>
+                      {card.text}
+                    </div>
                   </div>
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: '11px',
-                    fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.3,
-                  }}>
-                    {card.text}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* ---------- NATIJA ---------- */}
+        {/* ======== NATIJA ======== */}
         {phase === 'result' && (
           <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -575,53 +689,50 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           }}>
             {winner && (
               <div style={{
-                padding: '16px 24px', borderRadius: '16px',
-                background: 'rgba(0,0,0,0.55)',
-                backdropFilter: 'blur(12px)',
+                padding: '14px 20px', borderRadius: '14px',
+                background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(12px)',
                 border: '1.5px solid rgba(255,215,0,0.3)',
-                textAlign: 'center', marginBottom: '12px',
-                boxShadow: '0 8px 32px rgba(255,215,0,0.15)',
+                textAlign: 'center', marginBottom: '10px',
+                boxShadow: '0 8px 28px rgba(255,215,0,0.12)',
               }}>
-                <div style={{ fontSize: '32px', marginBottom: '6px' }}>🏆</div>
+                <div style={{ fontSize: '28px', marginBottom: '4px' }}>🏆</div>
                 <div style={{
-                  fontFamily: 'var(--font-display)', fontSize: '18px',
+                  fontFamily: 'var(--font-display)', fontSize: '16px',
                   fontWeight: 700, color: '#ffd700',
                 }}>
                   {winner.avatar} {winner.name}
                 </div>
                 <div style={{
-                  fontFamily: 'var(--font-body)', fontSize: '11px',
-                  color: 'rgba(255,255,255,0.5)', marginTop: '4px',
+                  fontFamily: 'var(--font-body)', fontSize: '10px',
+                  color: 'rgba(255,255,255,0.45)', marginTop: '3px',
                 }}>
                   Eng kulgili javob!
                 </div>
               </div>
             )}
 
-            {/* Scoreboard */}
             <div style={{
-              display: 'flex', gap: '6px', flexWrap: 'wrap',
-              justifyContent: 'center', marginBottom: '16px',
+              display: 'flex', gap: '5px', flexWrap: 'wrap',
+              justifyContent: 'center', marginBottom: '12px',
             }}>
               {sortedPlayers.slice(0, 3).map((p, i) => (
                 <div key={p.id} style={{
-                  padding: '6px 12px', borderRadius: '8px',
-                  background: 'rgba(0,0,0,0.45)',
-                  backdropFilter: 'blur(6px)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  display: 'flex', alignItems: 'center', gap: '4px',
+                  padding: '5px 10px', borderRadius: '8px',
+                  background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  display: 'flex', alignItems: 'center', gap: '3px',
                 }}>
-                  <span style={{ fontSize: '10px' }}>
+                  <span style={{ fontSize: '9px' }}>
                     {i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}
                   </span>
                   <span style={{
-                    fontFamily: 'var(--font-body)', fontSize: '10px',
-                    color: 'rgba(255,255,255,0.7)',
+                    fontFamily: 'var(--font-body)', fontSize: '9px',
+                    color: 'rgba(255,255,255,0.65)',
                   }}>
                     {p.name}
                   </span>
                   <span style={{
-                    fontFamily: 'var(--font-display)', fontSize: '11px',
+                    fontFamily: 'var(--font-display)', fontSize: '10px',
                     fontWeight: 700, color: '#ffd700',
                   }}>
                     {p.score}
@@ -633,13 +744,13 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             <button
               onClick={handleNextRound}
               style={{
-                padding: '12px 32px', borderRadius: '12px', border: 'none',
+                padding: '10px 28px', borderRadius: '10px', border: 'none',
                 background: round >= TOTAL_ROUNDS
                   ? 'linear-gradient(135deg, #2ed573, #1abc9c)'
                   : 'linear-gradient(135deg, #ff006e, #ff4757)',
-                fontFamily: 'var(--font-display)', fontSize: '14px',
+                fontFamily: 'var(--font-display)', fontSize: '13px',
                 fontWeight: 700, color: '#fff', cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(255,0,110,0.3)',
+                boxShadow: '0 4px 14px rgba(255,0,110,0.25)',
                 transition: 'transform 0.2s ease',
               }}
               onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.96)')}
@@ -651,115 +762,16 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         )}
       </div>
 
-      {/* ====== PASTKI QISM — KARTALAR ====== */}
-      {phase === 'playing' && (
-        <div style={{
-          position: 'relative', zIndex: 10,
-          padding: '10px 12px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
-          background: 'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 70%, transparent 100%)',
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: '8px', padding: '0 4px',
-          }}>
-            <div style={{
-              fontFamily: 'var(--font-display)', fontSize: '11px',
-              fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1px',
-            }}>
-              🔵 SIZNING KARTALARINGIZ
-            </div>
-            <div style={{
-              fontFamily: 'var(--font-display)', fontSize: '11px',
-              fontWeight: 700, color: '#3742fa',
-            }}>
-              {playerCards.length} ta
-            </div>
-          </div>
-
-          <div style={{
-            display: 'flex', gap: '8px',
-            overflowX: 'auto', paddingBottom: '4px',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}>
-            {playerCards.map((card, i) => {
-              const isInventory = typeof card.id === 'string';
-              const isSelected = selectedBlue === card.id;
-
-              return (
-                <button
-                  key={card.id}
-                  onClick={() => handleSelectBlue(card.id)}
-                  disabled={selectedBlue !== null}
-                  style={{
-                    minWidth: '85px', height: '115px',
-                    borderRadius: '12px', border: 'none', padding: '10px 8px',
-                    cursor: selectedBlue ? 'default' : 'pointer',
-                    flexShrink: 0,
-                    opacity: selectedBlue && !isSelected ? 0.3 : 1,
-                    transform: isSelected ? 'translateY(-12px) scale(1.05)' : 'translateY(0)',
-                    transition: 'all 0.3s ease',
-                    background: isSelected
-                      ? 'linear-gradient(135deg, #3742fa, #5352ed)'
-                      : 'linear-gradient(135deg, #1a1a2e, #16213e)',
-                    border: isSelected
-                      ? '2px solid #5352ed'
-                      : '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: isSelected
-                      ? '0 8px 24px rgba(55,66,250,0.3)'
-                      : '0 2px 8px rgba(0,0,0,0.3)',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    position: 'relative',
-                    animation: `fadeUp 0.3s ease ${i * 0.05}s forwards`,
-                  }}
-                >
-                  {isInventory && (
-                    <div style={{
-                      position: 'absolute', top: '5px', right: '5px',
-                      width: '16px', height: '16px', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #00b4d8, #0096c7)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '8px', color: '#fff', fontWeight: 700,
-                    }}>
-                      ★
-                    </div>
-                  )}
-                  <div style={{
-                    fontFamily: 'var(--font-body)', fontSize: '10px',
-                    fontWeight: 600, color: '#fff', lineHeight: 1.3,
-                    textAlign: 'center',
-                  }}>
-                    {card.text}
-                  </div>
-                  {card.power && (
-                    <div style={{
-                      position: 'absolute', bottom: '5px',
-                      fontFamily: 'var(--font-display)', fontSize: '8px',
-                      color: 'rgba(255,255,255,0.3)',
-                    }}>
-                      ⚡{card.power}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* ====== ANIMATSIYALAR ====== */}
       <style>{`
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
+          from { opacity: 0; transform: translateY(12px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes pulse {
           0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
+          50% { transform: scale(1.06); }
         }
-        div::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );
