@@ -60,7 +60,7 @@ const INVENTORY_POOL: Card[] = [
   { id: 'inv5', text: 'Telefon yo\'qolganida tinchlik topish', category: 'tech', power: 7 },
 ];
 
-// ============= FOYDALANUVCHI YORDAMCHI =============
+// ============= YORDAMCHI =============
 function shuffle<T>(arr: T[]): T[] {
   const s = [...arr];
   for (let i = s.length - 1; i > 0; i--) {
@@ -84,12 +84,6 @@ const TOTAL_ROUNDS = 5;
 
 // ============= ASOSIY KOMPONENT =============
 export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
-  // -- O'yin bosqichlari --
-  // 'waiting'  → xona kutish / tayyorlanish
-  // 'showQuestion' → qizil karta ochiladi (savol)
-  // 'playing'  → o'yinchi ko'k karta tanlaydi
-  // 'voting'   → barcha kartalar ko'rsatiladi, ovoz berish
-  // 'result'   → raund natijasi
   type Phase = 'waiting' | 'showQuestion' | 'playing' | 'voting' | 'result';
 
   const [phase, setPhase] = useState<Phase>('waiting');
@@ -99,52 +93,43 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   const [countdown, setCountdown] = useState(3);
   const [isTimeWarning, setIsTimeWarning] = useState(false);
 
-  // -- O'yinchilar --
   const [players, setPlayers] = useState<Player[]>(() =>
     PLAYERS_INIT.map((p) => ({ ...p, score: 0 }))
   );
 
-  // -- Joriy savol (qizil karta) --
   const [currentRed, setCurrentRed] = useState<Card>(() =>
     RED_CARDS[Math.floor(Math.random() * RED_CARDS.length)]
   );
   const [usedRedIds, setUsedRedIds] = useState<Set<number>>(new Set());
 
-  // -- O'yinchining qo'lidagi kartalar --
   const [playerCards, setPlayerCards] = useState<Card[]>(() => {
     const inv = shuffle([...INVENTORY_POOL]).slice(0, 2);
     const blue = shuffle([...BLUE_CARDS_POOL]).slice(0, 5);
     return [...inv, ...blue];
   });
 
-  // -- Boshqa o'yinchilarning tanlagan kartalari (simulyatsiya) --
   const [opponentPlays, setOpponentPlays] = useState<Card[]>([]);
-
-  // -- G'olib --
   const [winner, setWinner] = useState<Player | null>(null);
 
   // ==========================================
-  // RAUND BOSHLANISHI — countdown
+  // RAUND BOSHLASH
   // ==========================================
   const startRound = useCallback(() => {
-    // Yangi savol
     const available = RED_CARDS.filter((c) => !usedRedIds.has(c.id as number));
     const pool = available.length > 0 ? available : RED_CARDS;
     const newRed = pool[Math.floor(Math.random() * pool.length)];
     setCurrentRed(newRed);
     setUsedRedIds((prev) => new Set(prev).add(newRed.id as number));
 
-    // Kartalarni to'ldirish (agar 7 tadan kam bo'lsa)
     setPlayerCards((prev) => {
       if (prev.length >= 7) return prev;
       const needed = 7 - prev.length;
       const existingIds = new Set(prev.map((c) => c.id));
-      const available = BLUE_CARDS_POOL.filter((c) => !existingIds.has(c.id));
-      const newCards = shuffle(available).slice(0, needed);
+      const avail = BLUE_CARDS_POOL.filter((c) => !existingIds.has(c.id));
+      const newCards = shuffle(avail).slice(0, needed);
       return [...prev, ...newCards];
     });
 
-    // Tayyorlash
     setSelectedBlue(null);
     setOpponentPlays([]);
     setWinner(null);
@@ -154,10 +139,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     setPhase('waiting');
   }, [usedRedIds]);
 
-  // -- Birinchi raundni boshlash --
-  useEffect(() => {
-    startRound();
-  }, []); // eslint-disable-line
+  useEffect(() => { startRound(); }, []); // eslint-disable-line
 
   // ==========================================
   // COUNTDOWN (3-2-1)
@@ -180,9 +162,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   // ==========================================
   useEffect(() => {
     if (phase !== 'showQuestion') return;
-    const t = setTimeout(() => {
-      setPhase('playing');
-    }, 1500);
+    const t = setTimeout(() => setPhase('playing'), 1500);
     return () => clearTimeout(t);
   }, [phase]);
 
@@ -191,19 +171,14 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   // ==========================================
   useEffect(() => {
     if (phase !== 'playing') return;
-
     if (roundTimer <= 0) {
-      // Taymer tugadi — avtomatik tanlash EMAS, ogohlantirish
       setIsTimeWarning(true);
       if (playerCards.length > 0 && selectedBlue === null) {
-        // Agar tanlamagan bo'lsa, birinchi kartani tanlaydi
         handleSelectBlue(playerCards[0].id);
       }
       return;
     }
-
     if (roundTimer <= 10) setIsTimeWarning(true);
-
     const t = setInterval(() => setRoundTimer((p) => p - 1), 1000);
     return () => clearInterval(t);
   }, [roundTimer, phase]); // eslint-disable-line
@@ -215,11 +190,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     if (phase !== 'playing') return;
     hapticImpact('medium');
     setSelectedBlue(id);
-
-    // Karta qo'ldan olinadi
     setPlayerCards((prev) => prev.filter((c) => c.id !== id));
 
-    // Simulyatsiya: raqiblar ham tanlaydi (1-2 soniyada)
     setTimeout(() => {
       const oppCards = shuffle([...BLUE_CARDS_POOL])
         .filter((c) => c.id !== id)
@@ -230,15 +202,13 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   };
 
   // ==========================================
-  // OVOZ BERISH (simulyatsiya — 3 soniya)
+  // OVOZ BERISH (simulyatsiya)
   // ==========================================
   useEffect(() => {
     if (phase !== 'voting') return;
     const t = setTimeout(() => {
-      // Tasodifiy g'olib
       const allPlayers = players.filter((p) => p.id !== 'me');
       const randomWinner = allPlayers[Math.floor(Math.random() * allPlayers.length)];
-
       setPlayers((prev) =>
         prev.map((p) =>
           p.id === randomWinner.id ? { ...p, score: p.score + 1 } : p
@@ -252,7 +222,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   }, [phase]); // eslint-disable-line
 
   // ==========================================
-  // KEYINGI RAUND / YAKUNLASH
+  // KEYINGI RAUND
   // ==========================================
   const handleNextRound = () => {
     hapticImpact('medium');
@@ -278,26 +248,28 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: '100dvh', // Telegram Mini App uchun to'g'ri viewport
+      height: '100dvh',
       position: 'relative', overflow: 'hidden',
     }}>
 
-      {/* ====== FON: gradient mesh (rasm o'rniga ishonchli) ====== */}
+      {/* ====== FON RASMI — public/assets/game-bg.png ====== */}
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 0,
-        background: `
-          radial-gradient(ellipse at 20% 80%, rgba(255,0,110,0.15) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 20%, rgba(55,66,250,0.15) 0%, transparent 50%),
-          radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%),
-          #0a0a0f
-        `,
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundImage: 'url(/assets/game-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        zIndex: 0,
       }} />
 
-      {/* Noise texture overlay */}
+      {/* Qoraytirish qatlami — rasm ustidan o'qilishi uchun */}
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 1,
-        opacity: 0.03, pointerEvents: 'none',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.75) 100%)',
+        zIndex: 1,
+        pointerEvents: 'none',
       }} />
 
       {/* ====== HEADER ====== */}
@@ -306,15 +278,14 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 14px',
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
-        background: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(6px)',
       }}>
         <button
           onClick={() => { hapticImpact('light'); onGameEnd(); }}
           style={{
             width: '32px', height: '32px', borderRadius: '8px',
-            background: 'rgba(255,255,255,0.08)', border: 'none',
+            background: 'rgba(255,255,255,0.1)', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', color: '#fff', fontSize: '14px',
           }}
@@ -324,7 +295,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
         <div style={{ textAlign: 'center' }}>
           <div style={{
-            fontFamily: 'var(--font-display)', fontSize: '13px',
+            fontFamily: 'var(--font-display)', fontSize: '14px',
             fontWeight: 700, color: '#fff', letterSpacing: '2px',
           }}>
             ROUND {round}/{TOTAL_ROUNDS}
@@ -348,13 +319,13 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 700,
           color: phase === 'playing' ? timerColor : 'rgba(255,255,255,0.3)',
           transition: 'all 0.3s ease',
-          animation: isTimeWarning ? 'pulse 0.5s ease infinite' : 'none',
+          animation: isTimeWarning && phase === 'playing' ? 'pulse 0.5s ease infinite' : 'none',
         }}>
           {phase === 'playing' ? roundTimer : '⏱'}
         </div>
       </div>
 
-      {/* ====== ASOSIY OYIN MAYDONI ====== */}
+      {/* ====== ASOSIY O'YIN MAYDONI ====== */}
       <div style={{
         position: 'relative', zIndex: 5, flex: 1,
         display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -362,7 +333,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         overflow: 'hidden',
       }}>
 
-        {/* ---------- COUNTDOWN ---------- */}
+        {/* ---------- COUNTDOWN (fon rasm ko'rinadi) ---------- */}
         {phase === 'waiting' && (
           <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -370,19 +341,21 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           }}>
             <div style={{
               width: '80px', height: '80px', borderRadius: '50%',
-              background: 'rgba(255,0,110,0.15)',
-              border: '3px solid rgba(255,0,110,0.4)',
+              background: 'rgba(0,0,0,0.5)',
+              border: '3px solid rgba(255,0,110,0.5)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: 'var(--font-display)', fontSize: '36px',
               fontWeight: 700, color: '#ff006e',
               animation: 'pulse 0.8s ease infinite',
+              backdropFilter: 'blur(10px)',
             }}>
               {countdown > 0 ? countdown : '🎯'}
             </div>
             <div style={{
               marginTop: '12px',
               fontFamily: 'var(--font-display)', fontSize: '14px',
-              color: 'rgba(255,255,255,0.5)', letterSpacing: '2px',
+              color: 'rgba(255,255,255,0.6)', letterSpacing: '2px',
+              textShadow: '0 2px 8px rgba(0,0,0,0.5)',
             }}>
               RAUND {round}
             </div>
@@ -397,14 +370,13 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           }}>
             <div style={{
               padding: '20px 24px', borderRadius: '16px',
-              background: 'linear-gradient(135deg, rgba(255,0,110,0.2), rgba(255,71,87,0.15))',
-              border: '1.5px solid rgba(255,0,110,0.3)',
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(12px)',
+              border: '1.5px solid rgba(255,0,110,0.4)',
               maxWidth: '320px', textAlign: 'center',
-              boxShadow: '0 8px 32px rgba(255,0,110,0.15)',
+              boxShadow: '0 8px 32px rgba(255,0,110,0.2)',
             }}>
-              <div style={{
-                fontSize: '28px', marginBottom: '10px',
-              }}>🔴</div>
+              <div style={{ fontSize: '28px', marginBottom: '10px' }}>🔴</div>
               <div style={{
                 fontFamily: 'var(--font-display)', fontSize: '16px',
                 fontWeight: 700, color: '#fff', lineHeight: 1.5,
@@ -415,21 +387,23 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             <div style={{
               marginTop: '12px',
               fontFamily: 'var(--font-body)', fontSize: '11px',
-              color: 'rgba(255,255,255,0.4)',
+              color: 'rgba(255,255,255,0.5)',
+              textShadow: '0 2px 6px rgba(0,0,0,0.5)',
             }}>
               Eng mos javob kartasini tanlang...
             </div>
           </div>
         )}
 
-        {/* ---------- O'YIN: STOL + O'YINCHILAR ---------- */}
+        {/* ---------- O'YIN: SAVOL + O'YINCHILAR ---------- */}
         {phase === 'playing' && (
           <>
-            {/* Savol kichkina ko'rinishda */}
+            {/* Savol kichkina */}
             <div style={{
               padding: '10px 16px', borderRadius: '12px',
-              background: 'rgba(255,0,110,0.1)',
-              border: '1px solid rgba(255,0,110,0.2)',
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,0,110,0.25)',
               maxWidth: '300px', textAlign: 'center',
               marginBottom: '12px',
             }}>
@@ -464,10 +438,11 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                   }}>
                     <div style={{
                       width: '36px', height: '36px', borderRadius: '50%',
-                      background: 'rgba(255,255,255,0.08)',
+                      background: 'rgba(0,0,0,0.5)',
+                      backdropFilter: 'blur(4px)',
                       border: player.score > 0
                         ? '2px solid #ffd700'
-                        : '2px solid rgba(255,255,255,0.1)',
+                        : '2px solid rgba(255,255,255,0.15)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '16px', position: 'relative',
                     }}>
@@ -481,9 +456,10 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                     </div>
                     <div style={{
                       fontFamily: 'var(--font-body)', fontSize: '9px',
-                      color: 'rgba(255,255,255,0.6)',
+                      color: 'rgba(255,255,255,0.7)',
                       maxWidth: '55px', overflow: 'hidden',
                       textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center',
+                      textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                     }}>
                       {player.name}
                     </div>
@@ -491,6 +467,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                       <div style={{
                         fontFamily: 'var(--font-display)', fontSize: '10px',
                         fontWeight: 700, color: '#ffd700',
+                        textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                       }}>
                         {player.score}⭐
                       </div>
@@ -510,8 +487,9 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           }}>
             <div style={{
               fontFamily: 'var(--font-display)', fontSize: '12px',
-              color: 'rgba(255,255,255,0.5)', letterSpacing: '1px',
+              color: 'rgba(255,255,255,0.6)', letterSpacing: '1px',
               marginBottom: '10px',
+              textShadow: '0 2px 6px rgba(0,0,0,0.5)',
             }}>
               🗳 OVOZ BERILMOQDA...
             </div>
@@ -519,8 +497,9 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             {/* Savol */}
             <div style={{
               padding: '10px 14px', borderRadius: '10px',
-              background: 'rgba(255,0,110,0.1)',
-              border: '1px solid rgba(255,0,110,0.2)',
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,0,110,0.25)',
               textAlign: 'center', marginBottom: '12px', width: '100%',
             }}>
               <div style={{
@@ -536,17 +515,17 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '8px', width: '100%',
             }}>
-              {/* O'yinchining tanlagan kartasi */}
               {selectedBlue && (
                 <div style={{
                   padding: '10px', borderRadius: '10px',
-                  background: 'rgba(55,66,250,0.15)',
-                  border: '1.5px solid rgba(55,66,250,0.4)',
+                  background: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1.5px solid rgba(55,66,250,0.5)',
                   textAlign: 'center',
                 }}>
                   <div style={{
                     fontFamily: 'var(--font-body)', fontSize: '9px',
-                    color: '#3742fa', marginBottom: '4px',
+                    color: '#5352ed', marginBottom: '4px',
                   }}>
                     SIZ
                   </div>
@@ -559,11 +538,11 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 </div>
               )}
 
-              {/* Raqiblar kartalari */}
               {opponentPlays.map((card, i) => (
                 <div key={card.id} style={{
                   padding: '10px', borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'rgba(0,0,0,0.4)',
+                  backdropFilter: 'blur(6px)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   textAlign: 'center',
                   animation: `fadeUp 0.3s ease ${i * 0.1}s forwards`,
@@ -571,14 +550,14 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 }}>
                   <div style={{
                     fontFamily: 'var(--font-body)', fontSize: '9px',
-                    color: 'rgba(255,255,255,0.4)', marginBottom: '4px',
+                    color: 'rgba(255,255,255,0.5)', marginBottom: '4px',
                   }}>
                     {players.filter((p) => p.id !== 'me')[i]?.avatar}{' '}
                     {players.filter((p) => p.id !== 'me')[i]?.name}
                   </div>
                   <div style={{
                     fontFamily: 'var(--font-body)', fontSize: '11px',
-                    fontWeight: 600, color: 'rgba(255,255,255,0.8)', lineHeight: 1.3,
+                    fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: 1.3,
                   }}>
                     {card.text}
                   </div>
@@ -594,14 +573,14 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             animation: 'fadeUp 0.4s ease forwards',
           }}>
-            {/* G'olib */}
             {winner && (
               <div style={{
                 padding: '16px 24px', borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,165,0,0.08))',
-                border: '1.5px solid rgba(255,215,0,0.25)',
+                background: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(12px)',
+                border: '1.5px solid rgba(255,215,0,0.3)',
                 textAlign: 'center', marginBottom: '12px',
-                boxShadow: '0 8px 32px rgba(255,215,0,0.1)',
+                boxShadow: '0 8px 32px rgba(255,215,0,0.15)',
               }}>
                 <div style={{ fontSize: '32px', marginBottom: '6px' }}>🏆</div>
                 <div style={{
@@ -627,7 +606,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               {sortedPlayers.slice(0, 3).map((p, i) => (
                 <div key={p.id} style={{
                   padding: '6px 12px', borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'rgba(0,0,0,0.45)',
+                  backdropFilter: 'blur(6px)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   display: 'flex', alignItems: 'center', gap: '4px',
                 }}>
@@ -769,7 +749,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         </div>
       )}
 
-      {/* ====== GLOBAL ANIMATSIYALAR ====== */}
+      {/* ====== ANIMATSIYALAR ====== */}
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(16px); }
