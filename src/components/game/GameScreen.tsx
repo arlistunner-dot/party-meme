@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { hapticImpact, hapticSuccess } from '@/config/telegram';
-import RoomChat from '@/components/common/RoomChat';
-
 
 interface GameScreenProps {
   onNavigate: (tab: string) => void;
   onGameEnd: () => void;
 }
 
-// QIZIL KARTALAR — savollar (har raundda random tanlanadi)
+// QIZIL KARTALAR — savollar
 const RED_CARDS = [
   { id: 1, text: 'Men uydan chiqishni yomon ko\'raman, chunki...' },
   { id: 2, text: 'Eng yomon sovg\'a bu...' },
@@ -20,114 +18,146 @@ const RED_CARDS = [
   { id: 8, text: 'Oilam menga ishonmaydi, chunki men...' },
 ];
 
-// KO'K KARTALAR — o'yinchiga beriladigan 5 ta random karta
+// KO'K KARTALAR — javoblar
 const BLUE_CARDS_POOL = [
   { id: 101, text: 'WiFi parolini unutganingizda' },
   { id: 102, text: 'Nonushtasiz uydan chiqqan va hayotim yaxshi ketayotgani' },
   { id: 103, text: 'Sport zalga borganim (1 kun)' },
-  { id: 104, text: 'Kredit karta hisobimni ko\'rganimda 🫠' },
-  { id: 105, text: 'Men ertaga boshlayman deb aytgan edim... 3 yil oldin' },
+  { id: 104, text: 'Kredit karta hisobimni ko\'rganimda' },
+  { id: 105, text: 'Men ertaga boshlayman degan edim... 3 yil oldin' },
   { id: 106, text: 'Telefonim 1% da va zaryadkani topolmayapman' },
-  { id: 107, text: 'Do\'stim "5 daqiqaga chiqaman" deganiga 2 soat bo\'ldi' },
+  { id: 107, text: 'Do\'stim 5 daqiqaga chiqaman deganiga 2 soat bo\'ldi' },
   { id: 108, text: 'Yangi yil qarorlarim (1 hafta yashagan)' },
-  { id: 109, text: 'Onamning "Men sen yoshligingda..." hikoyasi' },
-  { id: 110, text: 'Instagram da 2 soat "tezgina" qarab chiqish' },
-  { id: 111, text: 'Kuryer "Yetib keldim" deganda men uyda emasligim' },
-  { id: 112, text: 'Pullarimni tejayapman deb o\'ylab, keyin ko\'rgan narsamni sotib olganmam' },
-  { id: 113, text: 'Pazandalikda "tajriba" o\'tkazish va oshxonani yoqish' },
+  { id: 109, text: 'Onamning Men sen yoshligingda hikoyasi' },
+  { id: 110, text: 'Instagram da 2 soat tezgina qarab chiqish' },
+  { id: 111, text: 'Kuryer Yetib keldim deganda men uyda emasligim' },
+  { id: 112, text: 'Pullarimni tejayapman deb keyin ko\'rgan narsamni sotib olganman' },
+  { id: 113, text: 'Pazandalikda tajriba o\'tkazish va oshxonani yoqish' },
   { id: 114, text: 'GPS ishonmayman deb adashib ketishim' },
-  { id: 115, text: 'Ertalab soat 6 da turganim va sport zalga bormaganim' },
+  { id: 115, text: 'Ertalab 6 da turganim va sport zalga bormaganim' },
 ];
 
-// O'YINCHINING INVENTARIDAN KELGAN 2 TA KARTA
+// INVENTAR — 2 ta karta
 const INVENTORY_CARDS = [
   { id: 'inv1', text: 'WiFi yo\'qolgan paytda qo\'rquv', category: 'tech', power: 7 },
   { id: 'inv2', text: 'Do\'st bilan kechki ovqat va sirlar', category: 'national', power: 6 },
 ];
 
-// Tasodifiy tanlash helper
+// O'YINCHILAR (simulyatsiya)
+const PLAYERS = [
+  { id: 'p1', name: 'Sardor', avatar: '😎', score: 0, cards: 7 },
+  { id: 'p2', name: 'Dilnoza', avatar: '🤠', score: 0, cards: 7 },
+  { id: 'p3', name: 'Javohir', avatar: '👻', score: 0, cards: 7 },
+  { id: 'p4', name: 'Malika', avatar: '🦊', score: 0, cards: 7 },
+  { id: 'p5', name: 'Sarvar', avatar: '🐼', score: 0, cards: 7 },
+  { id: 'p6', name: 'Nodira', avatar: '🦁', score: 0, cards: 7 },
+  { id: 'me', name: 'Siz', avatar: '🤖', score: 0, cards: 7 },
+];
+
+// Shuffle
 function shuffle<T>(arr: T[]): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
+  const s = [...arr];
+  for (let i = s.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [s[i], s[j]] = [s[j], s[i]];
   }
-  return shuffled;
+  return s;
 }
 
 export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
-  const [phase, setPhase] = useState<'play' | 'judge' | 'result'>('play');
+  const [phase, setPhase] = useState<'play' | 'reveal' | 'result'>('play');
   const [round, setRound] = useState(1);
-  const [selectedBlue, setSelectedBlue] = useState<number | null>(null);
-  const [scores] = useState<Record<number, number>>({ 1: 2, 2: 1, 3: 0 });
+  const [selectedBlue, setSelectedBlue] = useState<number | string | null>(null);
+  const [flippedRed, setFlippedRed] = useState(false);
+  const [flippedBlue, setFlippedBlue] = useState<number | string | null>(null);
   const [roundTimer, setRoundTimer] = useState(30);
+  const [scores, setScores] = useState<Record<string, number>>(() => {
+    const s: Record<string, number> = {};
+    PLAYERS.forEach((p) => (s[p.id] = 0));
+    return s;
+  });
 
-  // Har raundda random qizil karta
-  const [currentRedCard, setCurrentRedCard] = useState(() =>
+  // Qizil karta — har raundda random
+  const [currentRed, setCurrentRed] = useState(() =>
     RED_CARDS[Math.floor(Math.random() * RED_CARDS.length)]
   );
 
-  // 7 ta karta: 2 ta inventar + 5 ta random
+  // 7 ta karta: 2 inventar + 5 random
   const [playerCards, setPlayerCards] = useState(() => {
-    const randomCards = shuffle(BLUE_CARDS_POOL).slice(0, 5);
-    return [...INVENTORY_CARDS, ...randomCards];
+    const random = shuffle(BLUE_CARDS_POOL).slice(0, 5);
+    return [...INVENTORY_CARDS, ...random];
   });
 
-  // 30 soniya taymer
+  // 5 ta yopiq qizil karta (stol ustida)
+  const redCardsOnTable = Array.from({ length: 5 }).map((_, i) => ({
+    roundNum: i + 1,
+    isOpen: i + 1 < round,
+    isCurrent: i + 1 === round,
+  }));
+
+  // Taymer
   useEffect(() => {
     if (phase !== 'play') return;
     if (roundTimer <= 0) {
-      // Vaqt tugadi — avtomatik birinchi kartani tanlash
-      if (playerCards.length > 0) {
-        handleSelectBlue(playerCards[0].id);
-      }
+      if (playerCards.length > 0) handleSelectBlue(playerCards[0].id);
       return;
     }
-
-    const timer = setInterval(() => {
-      setRoundTimer((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
+    const t = setInterval(() => setRoundTimer((p) => p - 1), 1000);
+    return () => clearInterval(t);
   }, [roundTimer, phase]);
 
   // Ko'k karta tanlash
   const handleSelectBlue = (id: number | string) => {
     hapticImpact('medium');
-    setSelectedBlue(id as number);
-    setTimeout(() => setPhase('judge'), 600);
+    setSelectedBlue(id);
+    setFlippedBlue(id);
+    setTimeout(() => setPhase('reveal'), 800);
   };
 
-  // Hakam tanlashi
-  const handleJudge = () => {
-    hapticSuccess();
-    setPhase('result');
-  };
+  // Qizil karta ochish (animatsiya)
+  useEffect(() => {
+    if (phase === 'reveal' && !flippedRed) {
+      setTimeout(() => setFlippedRed(true), 500);
+    }
+  }, [phase, flippedRed]);
 
-  // Keyingi round
+  // Natija
+  useEffect(() => {
+    if (phase === 'reveal' && flippedRed) {
+      const timer = setTimeout(() => {
+        hapticSuccess();
+        // Simulyatsiya — tasodifiy g'olib
+        const randomWinner = PLAYERS[Math.floor(Math.random() * (PLAYERS.length - 1))];
+        setScores((prev) => ({ ...prev, [randomWinner.id]: prev[randomWinner.id] + 1 }));
+        setPhase('result');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, flippedRed]);
+
+  // Keyingi raund
   const handleNextRound = () => {
     hapticImpact('medium');
     if (round >= 5) {
       onGameEnd();
       return;
     }
-
-    setRound(round + 1);
+    setRound((r) => r + 1);
     setSelectedBlue(null);
+    setFlippedBlue(null);
+    setFlippedRed(false);
     setPhase('play');
     setRoundTimer(30);
 
-    // Yangi random qizil karta
-    const unusedRed = RED_CARDS.filter((c) => c.id !== currentRedCard.id);
-    setCurrentRedCard(unusedRed[Math.floor(Math.random() * unusedRed.length)]);
+    const unused = RED_CARDS.filter((c) => c.id !== currentRed.id);
+    setCurrentRed(unused[Math.floor(Math.random() * unused.length)]);
 
-    // Yangi random 5 ta karta
-    const randomCards = shuffle(BLUE_CARDS_POOL).slice(0, 5);
-    setPlayerCards([...INVENTORY_CARDS, ...randomCards]);
+    const random = shuffle(BLUE_CARDS_POOL).slice(0, 5);
+    setPlayerCards([...INVENTORY_CARDS, ...random]);
   };
 
-  const timerColor =
-    roundTimer <= 10 ? '#ff4757' : roundTimer <= 20 ? '#ffa502' : '#2ed573';
+  const timerColor = roundTimer <= 10 ? '#ff4757' : roundTimer <= 20 ? '#ffa502' : '#2ed573';
+  const selectedCardText = playerCards.find((c) => c.id === selectedBlue)?.text || '';
 
   return (
     <div
@@ -140,550 +170,450 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         overflow: 'hidden',
       }}
     >
-      {/* FON RASMI */}
+      {/* ====== FON RASMI ====== */}
       <div
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
+          inset: 0,
           backgroundImage: 'url(/assets/game-bg.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          opacity: 0.3,
           zIndex: 0,
         }}
       />
-
-      {/* Qorong'u overlay */}
       <div
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background:
-            'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.85) 100%)',
+          inset: 0,
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%)',
           zIndex: 1,
           pointerEvents: 'none',
         }}
       />
 
-      {/* HEADER */}
+      {/* ====== HEADER ====== */}
       <div
         style={{
           position: 'relative',
-          zIndex: 2,
+          zIndex: 10,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '12px 16px',
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-          background: 'rgba(10,10,15,0.7)',
-          backdropFilter: 'blur(8px)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          flexShrink: 0,
+          padding: '10px 14px',
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(6px)',
         }}
       >
         <button
-          onClick={() => {
-            hapticImpact('light');
-            onGameEnd();
-          }}
+          onClick={() => { hapticImpact('light'); onGameEnd(); }}
           style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '10px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
+            width: '32px', height: '32px', borderRadius: '8px',
+            background: 'rgba(255,255,255,0.1)', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#fff', fontSize: '14px',
           }}
         >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="rgba(255,255,255,0.5)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+          ←
         </button>
-
         <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '15px',
-              fontWeight: 700,
-              color: '#fff',
-              letterSpacing: '2px',
-            }}
-          >
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 700, color: '#fff', letterSpacing: '2px' }}>
             ROUND {round}/5
           </div>
         </div>
-
-        {/* Taymer */}
         <div
           style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: `rgba(${
-              roundTimer <= 10
-                ? '255,71,87'
-                : roundTimer <= 20
-                ? '255,165,0'
-                : '46,213,115'
-            },0.12)`,
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: `rgba(${roundTimer <= 10 ? '255,71,87' : roundTimer <= 20 ? '255,165,0' : '46,213,115'},0.2)`,
             border: `2px solid ${timerColor}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--font-display)',
-            fontSize: '14px',
-            fontWeight: 700,
-            color: timerColor,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 700, color: timerColor,
           }}
         >
           {roundTimer}
         </div>
       </div>
 
-      {/* KONTENT */}
+      {/* ====== STOL + O'YINCHILAR ====== */}
       <div
         style={{
-          position: 'relative',
-          zIndex: 2,
-          flex: 1,
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          overflowY: 'auto',
+          position: 'relative', zIndex: 5, flex: 1,
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', padding: '10px',
         }}
       >
-        {/* ======== PLAY — QIZIL KARTA + KO'K KARTALAR ======== */}
-        {phase === 'play' && (
-          <>
-            {/* QIZIL KARTA — markazda */}
-            <div
-              style={{
-                padding: '20px',
-                borderRadius: '16px',
-                background:
-                  'linear-gradient(135deg, rgba(255,71,87,0.15), rgba(255,0,110,0.08))',
-                border: '2px solid rgba(255,71,87,0.3)',
-                boxShadow: '0 8px 30px rgba(255,71,87,0.15)',
-                textAlign: 'center',
-                animation: 'fadeUp 0.4s ease forwards',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  color: '#ff4757',
-                  marginBottom: '8px',
-                  letterSpacing: '2px',
-                }}
-              >
-                🔴 SAVOL
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '18px',
-                  fontWeight: 700,
-                  color: '#fff',
-                  lineHeight: 1.5,
-                }}
-              >
-                {currentRedCard.text}
-              </div>
-            </div>
+        {/* O'YINCHILAR — stol atrofida */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: '360px',
+            height: '200px',
+            marginBottom: '10px',
+          }}
+        >
+          {PLAYERS.filter((p) => p.id !== 'me').map((player, i) => {
+            // 6 o'yinchini aylana bo'ylab joylashtirish
+            const positions = [
+              { top: '0%', left: '50%', transform: 'translateX(-50%)' },
+              { top: '25%', left: '0%' },
+              { top: '25%', right: '0%' },
+              { top: '65%', left: '5%' },
+              { top: '65%', right: '5%' },
+              { top: '0%', left: '20%' },
+            ];
+            const pos = positions[i] || positions[0];
+            const playerScore = scores[player.id] || 0;
 
-            {/* Sarlavha */}
-            <div style={{ textAlign: 'center', padding: '4px 0' }}>
+            return (
               <div
+                key={player.id}
                 style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  color: '#3742fa',
+                  position: 'absolute',
+                  ...pos,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '2px',
                 }}
               >
-                🔵 JAVOBINGIZNI TANLANG
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.4)',
-                  marginTop: '2px',
-                }}
-              >
-                Eng kulgili javobni tashlang
-              </div>
-            </div>
-
-            {/* KO'K KARTALAR — 7 ta (scroll qilinadigan) */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-                paddingBottom: '8px',
-              }}
-            >
-              {playerCards.map((card, index) => {
-                const isInventory = typeof card.id === 'string';
-                return (
-                  <button
-                    key={card.id}
-                    onClick={() => handleSelectBlue(card.id)}
-                    style={{
-                      width: '100%',
-                      padding: '16px 18px',
-                      borderRadius: '14px',
-                      border:
-                        selectedBlue === card.id
-                          ? '2px solid #3742fa'
-                          : '2px solid rgba(55,66,250,0.12)',
-                      background:
-                        selectedBlue === card.id
-                          ? 'rgba(55,66,250,0.15)'
-                          : isInventory
-                          ? 'rgba(0,180,216,0.06)'
-                          : 'rgba(55,66,250,0.04)',
-                      fontFamily: 'var(--font-body)',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: '#fff',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      lineHeight: 1.4,
-                      animation: 'fadeUp 0.3s ease forwards',
-                      animationDelay: `${index * 0.06}s`,
-                      opacity: 0,
-                      transition: 'all 0.2s ease',
-                      position: 'relative',
-                    }}
-                  >
-                    {/* Inventar belgisi */}
-                    {isInventory && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '10px',
-                          fontFamily: 'var(--font-body)',
-                          fontSize: '9px',
-                          color: '#00b4d8',
-                          background: 'rgba(0,180,216,0.12)',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                        }}
-                      >
-                        🎴 SIZNIKI
-                      </div>
-                    )}
-                    {card.text}
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* ======== JUDGE — HAKAM TANLOVI ======== */}
-        {phase === 'judge' && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  color: '#ffd700',
-                  marginBottom: '4px',
-                }}
-              >
-                👑 HAKAM TANLASHI
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '12px',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                Eng yaxshi javobni tanlang
-              </div>
-            </div>
-
-            {/* Savol */}
-            <div
-              style={{
-                padding: '14px 18px',
-                borderRadius: '12px',
-                background: 'rgba(255,71,87,0.1)',
-                border: '1px solid rgba(255,71,87,0.2)',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  color: '#ff4757',
-                  marginBottom: '4px',
-                  letterSpacing: '1px',
-                }}
-              >
-                SAVOL:
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#fff',
-                }}
-              >
-                {currentRedCard.text}
-              </div>
-            </div>
-
-            {/* Javob */}
-            <div
-              style={{
-                padding: '16px 18px',
-                borderRadius: '14px',
-                background:
-                  'linear-gradient(135deg, rgba(55,66,250,0.15), rgba(155,93,229,0.1))',
-                border: '2px solid rgba(155,93,229,0.25)',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  color: '#9b5de5',
-                  marginBottom: '6px',
-                  letterSpacing: '1px',
-                }}
-              >
-                SIZNING JAVOBINGIZ:
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  color: '#fff',
-                  lineHeight: 1.4,
-                }}
-              >
-                {playerCards.find((c) => c.id === selectedBlue)?.text}
-              </div>
-            </div>
-
-            <button
-              onClick={handleJudge}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '14px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #ffd700, #e6ac00)',
-                fontFamily: 'var(--font-display)',
-                fontSize: '16px',
-                fontWeight: 700,
-                letterSpacing: '3px',
-                color: '#1a1a1a',
-                cursor: 'pointer',
-                transition: 'transform 0.15s ease',
-              }}
-              onMouseDown={(e) => {
-                (e.target as HTMLElement).style.transform = 'scale(0.96)';
-              }}
-              onMouseUp={(e) => {
-                (e.target as HTMLElement).style.transform = 'scale(1)';
-              }}
-            >
-              👑 G'OLIBNI TANLASH
-            </button>
-          </div>
-        )}
-
-        {/* ======== NATIJA ======== */}
-        {phase === 'result' && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '16px',
-              paddingTop: '20px',
-            }}
-          >
-            <div style={{ fontSize: '64px' }}>🎉</div>
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '22px',
-                fontWeight: 700,
-                color: '#ffd700',
-                margin: 0,
-                letterSpacing: '3px',
-              }}
-            >
-              ROUND {round} TUGADI
-            </h2>
-
-            {/* Ballar */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                padding: '16px',
-                borderRadius: '14px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.05)',
-              }}
-            >
-              {Object.entries(scores).map(([id, score]) => (
-                <div key={id} style={{ textAlign: 'center' }}>
+                {/* Avatar */}
+                <div
+                  style={{
+                    width: '38px', height: '38px', borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: playerScore > 0 ? '2px solid #ffd700' : '2px solid rgba(255,255,255,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '18px', position: 'relative',
+                  }}
+                >
+                  {player.avatar}
+                  {/* Online */}
                   <div
                     style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      background:
-                        'linear-gradient(135deg, rgba(155,93,229,0.3), rgba(255,0,110,0.3))',
-                      border: '2px solid rgba(255,255,255,0.15)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      color: '#fff',
-                      margin: '0 auto 6px',
+                      position: 'absolute', bottom: '-1px', right: '-1px',
+                      width: '9px', height: '9px', borderRadius: '50%',
+                      background: '#2ed573', border: '2px solid rgba(0,0,0,0.5)',
                     }}
-                  >
-                    {id === '1' ? 'A' : id === '2' ? 'B' : 'C'}
-                  </div>
+                  />
+                </div>
+                {/* Ism + ball */}
+                <div
+                  style={{
+                    fontFamily: 'var(--font-body)', fontSize: '9px',
+                    color: 'rgba(255,255,255,0.7)', textAlign: 'center',
+                    maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {player.name}
+                </div>
+                {playerScore > 0 && (
                   <div
                     style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '18px',
-                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)', fontSize: '10px', fontWeight: 700,
                       color: '#ffd700',
                     }}
                   >
-                    {score}
+                    {playerScore}
+                  </div>
+                )}
+                {/* Karta soni */}
+                <div
+                  style={{
+                    display: 'flex', gap: '1px',
+                  }}
+                >
+                  {Array.from({ length: Math.min(3, player.cards) }).map((_, j) => (
+                    <div
+                      key={j}
+                      style={{
+                        width: '8px', height: '12px', borderRadius: '2px',
+                        background: 'linear-gradient(135deg, #3742fa, #2d34a8)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ====== STOL MARKAZI — QIZIL KARTALAR ====== */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            justifyContent: 'center',
+            marginBottom: '10px',
+          }}
+        >
+          {redCardsOnTable.map((card) => {
+            const isRevealed = card.roundNum < round;
+            const isCurrent = card.roundNum === round;
+            const isFuture = card.roundNum > round;
+
+            return (
+              <div
+                key={card.roundNum}
+                style={{
+                  width: '52px',
+                  height: '74px',
+                  borderRadius: '8px',
+                  perspective: '600px',
+                  position: 'relative',
+                }}
+              >
+                {/* Yopiq karta */}
+                <div
+                  style={{
+                    position: 'absolute', inset: 0,
+                    borderRadius: '8px',
+                    backfaceVisibility: 'hidden',
+                    transition: 'transform 0.6s ease',
+                    transform: isRevealed || (isCurrent && flippedRed) ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                    background: isFuture
+                      ? 'linear-gradient(135deg, #cc0033, #990022)'
+                      : 'linear-gradient(135deg, #ff006e, #cc0044)',
+                    border: isCurrent
+                      ? '2px solid #ffd700'
+                      : '1px solid rgba(255,255,255,0.1)',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    boxShadow: isCurrent
+                      ? '0 0 15px rgba(255,215,0,0.3)'
+                      : '0 2px 8px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <div style={{ fontSize: '16px', marginBottom: '2px' }}>🎴</div>
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-display)', fontSize: '12px',
+                      fontWeight: 700, color: 'rgba(255,255,255,0.8)',
+                    }}
+                  >
+                    {card.roundNum}
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* G'olib kartasi */}
+                {/* Ochilgan karta */}
+                <div
+                  style={{
+                    position: 'absolute', inset: 0,
+                    borderRadius: '8px',
+                    backfaceVisibility: 'hidden',
+                    transition: 'transform 0.6s ease',
+                    transform: isRevealed || (isCurrent && flippedRed) ? 'rotateY(0deg)' : 'rotateY(-180deg)',
+                    background: '#fff',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '18px',
+                  }}
+                >
+                  ✓
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* JORIY SAVOL — ochilgan qizil karta */}
+        {(phase === 'reveal' || phase === 'result') && flippedRed && (
+          <div
+            style={{
+              padding: '12px 16px',
+              borderRadius: '12px',
+              background: 'rgba(255,71,87,0.15)',
+              border: '1px solid rgba(255,71,87,0.3)',
+              maxWidth: '320px',
+              textAlign: 'center',
+              animation: 'fadeUp 0.3s ease forwards',
+              marginBottom: '6px',
+            }}
+          >
             <div
               style={{
-                width: '100%',
-                padding: '18px',
-                borderRadius: '16px',
-                background:
-                  'linear-gradient(135deg, rgba(55,66,250,0.12), rgba(155,93,229,0.08))',
-                border: '2px solid rgba(155,93,229,0.2)',
-                textAlign: 'center',
+                fontFamily: 'var(--font-body)', fontSize: '10px',
+                color: '#ff4757', marginBottom: '4px', letterSpacing: '1px',
               }}
             >
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  color: '#ffd700',
-                  marginBottom: '8px',
-                  letterSpacing: '1px',
-                }}
-              >
-                🏆 G'OLIB KARTA
-              </div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  color: '#fff',
-                  lineHeight: 1.4,
-                }}
-              >
-                {playerCards.find((c) => c.id === selectedBlue)?.text}
-              </div>
+              SAVOL
             </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-display)', fontSize: '14px',
+                fontWeight: 700, color: '#fff', lineHeight: 1.4,
+              }}
+            >
+              {currentRed.text}
+            </div>
+          </div>
+        )}
 
+        {/* Natija */}
+        {phase === 'result' && (
+          <div
+            style={{
+              padding: '10px 16px',
+              borderRadius: '10px',
+              background: 'rgba(255,215,0,0.1)',
+              border: '1px solid rgba(255,215,0,0.2)',
+              textAlign: 'center',
+              maxWidth: '320px',
+              animation: 'fadeUp 0.3s ease forwards',
+            }}
+          >
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 700, color: '#ffd700' }}>
+              🏆 {selectedCardText}
+            </div>
             <button
               onClick={handleNextRound}
               style={{
-                width: '100%',
-                maxWidth: '280px',
-                padding: '14px',
-                borderRadius: '14px',
-                border: 'none',
-                background:
-                  round >= 5
-                    ? 'linear-gradient(135deg, #2ed573, #1abc9c)'
-                    : 'linear-gradient(135deg, #ff006e, #ff4757)',
-                fontFamily: 'var(--font-display)',
-                fontSize: '15px',
-                fontWeight: 700,
-                letterSpacing: '2px',
-                color: '#fff',
-                cursor: 'pointer',
-                transition: 'transform 0.15s ease',
-              }}
-              onMouseDown={(e) => {
-                (e.target as HTMLElement).style.transform = 'scale(0.96)';
-              }}
-              onMouseUp={(e) => {
-                (e.target as HTMLElement).style.transform = 'scale(1)';
+                marginTop: '8px',
+                padding: '8px 20px', borderRadius: '8px', border: 'none',
+                background: round >= 5
+                  ? 'linear-gradient(135deg, #2ed573, #1abc9c)'
+                  : 'linear-gradient(135deg, #ff006e, #ff4757)',
+                fontFamily: 'var(--font-display)', fontSize: '12px',
+                fontWeight: 700, color: '#fff', cursor: 'pointer',
               }}
             >
-              {round >= 5 ? '🏁 NATIJALAR' : '▶ KEYINGI ROUND'}
+              {round >= 5 ? '🏁 NATIJALAR' : '▶ KEYINGI'}
             </button>
           </div>
         )}
       </div>
 
-            {/* CHAT */}
-      <RoomChat
-        players={[
-          { id: 'p1', name: 'Sardor', avatar: '😎' },
-          { id: 'p2', name: 'Dilnoza', avatar: '🤠' },
-          { id: 'p3', name: 'Javohir', avatar: '👻' },
-          { id: 'p4', name: 'Malika', avatar: '🦊' },
-          { id: 'me', name: 'Siz', avatar: '🤖' },
-        ]}
-      />
+      {/* ====== PASTKI QISM — O'YINCHINING KARTALARI ====== */}
+      {phase === 'play' && (
+        <div
+          style={{
+            position: 'relative', zIndex: 10,
+            padding: '10px 12px',
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+            background: 'linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, transparent 100%)',
+          }}
+        >
+          {/* Sarlavha */}
+          <div
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: '8px', padding: '0 4px',
+            }}
+          >
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)' }}>
+              🔵 SIZNING KARTALARINGIZ
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '11px', fontWeight: 700, color: '#3742fa' }}>
+              {playerCards.length} ta
+            </div>
+          </div>
 
+          {/* Kartalar — gorizontal scroll */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px',
+              overflowX: 'auto',
+              paddingBottom: '6px',
+              scrollbarWidth: 'none',
+            }}
+          >
+            {playerCards.map((card, i) => {
+              const isInventory = typeof card.id === 'string';
+              const isFlipped = flippedBlue === card.id;
+
+              return (
+                <button
+                  key={card.id}
+                  onClick={() => handleSelectBlue(card.id)}
+                  style={{
+                    minWidth: '80px',
+                    height: '110px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    perspective: '600px',
+                    flexShrink: 0,
+                    animation: 'fadeUp 0.3s ease forwards',
+                    animationDelay: `${i * 0.05}s`,
+                    opacity: 0,
+                    position: 'relative',
+                  }}
+                >
+                  {/* YOPIQ KO'K KARTA */}
+                  <div
+                    style={{
+                      position: 'absolute', inset: 0,
+                      borderRadius: '10px',
+                      backfaceVisibility: 'hidden',
+                      transition: 'transform 0.5s ease',
+                      transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                      background: 'linear-gradient(135deg, #3742fa, #2d34a8)',
+                      border: '1.5px solid rgba(255,255,255,0.15)',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 3px 10px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    {/* Naqsh */}
+                    <div
+                      style={{
+                        width: '40px', height: '55px', borderRadius: '6px',
+                        border: '1.5px solid rgba(255,255,255,0.1)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      <div style={{ fontSize: '16px' }}>🎴</div>
+                    </div>
+                    {isInventory && (
+                      <div
+                        style={{
+                          position: 'absolute', top: '4px', right: '4px',
+                          width: '14px', height: '14px', borderRadius: '50%',
+                          background: '#00b4d8',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '7px', color: '#fff', fontWeight: 700,
+                        }}
+                      >
+                        ★
+                      </div>
+                    )}
+                  </div>
+
+                  {/* OCHILGAN KARTA (orti) */}
+                  <div
+                    style={{
+                      position: 'absolute', inset: 0,
+                      borderRadius: '10px',
+                      backfaceVisibility: 'hidden',
+                      transition: 'transform 0.5s ease',
+                      transform: isFlipped ? 'rotateY(0deg)' : 'rotateY(-180deg)',
+                      background: '#fff',
+                      border: '1.5px solid rgba(55,66,250,0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '8px',
+                      boxShadow: '0 3px 10px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-body)', fontSize: '10px',
+                        fontWeight: 600, color: '#1a1a1a', lineHeight: 1.3,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {card.text}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
