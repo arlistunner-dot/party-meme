@@ -404,7 +404,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 top: '58%', left: '50%',
                 transform: 'translate(-50%, -50%)',
                 zIndex: 20,
-                width: '70px', height: '95px',
+                width: '45px', height: '75px',
                 borderRadius: '8px',
                 background: 'linear-gradient(135deg, #ff006e, #cc0044)',
                 border: '2px solid rgba(166,77,255,0.4)',
