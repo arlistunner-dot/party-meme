@@ -82,7 +82,7 @@ const PLAYERS_INIT: Player[] = [
 const TOTAL_ROUNDS = 5;
 
 const SEAT_POSITIONS = [
-  { top: '49%', left: '55%', transform: 'translate(-50%, -50%)' },
+  { top: '49%', left: '50%', transform: 'translate(-50%, -50%)' },
   { top: '39%', left: '70%', transform: 'translate(-50%, -50%)' },
   { top: '52%', left: '83%', transform: 'translate(-50%, -50%)' },
   { top: '73%', left: '71%', transform: 'translate(-50%, -50%)' },
