@@ -225,7 +225,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           ============================================================== */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0,
-        backgroundImage: 'url(/assets/game-room.png)',
+        backgroundImage: 'url(/assets/game-bg.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
