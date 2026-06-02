@@ -83,7 +83,7 @@ const TOTAL_ROUNDS = 5;
 
 const SEAT_POSITIONS = [
   { top: '49%', left: '50%', transform: 'translate(-50%, -50%)' },
-  { top: '55%', left: '80%', transform: 'translate(-50%, -50%)' },
+  { top: '50%', left: '80%', transform: 'translate(-50%, -50%)' },
   { top: '60%', left: '90%', transform: 'translate(-50%, -50%)' },
   { top: '79%', left: '75%', transform: 'translate(-50%, -50%)' },
   { top: '79%', left: '19%', transform: 'translate(-50%, -50%)' },
