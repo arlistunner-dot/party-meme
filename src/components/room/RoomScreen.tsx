@@ -110,7 +110,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
       >
         {/* FON RASMI */}
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 0,
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
           backgroundImage: 'url(/assets/game-bg.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -235,7 +235,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
     >
       {/* ====== FON RASMI ====== */}
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 0,
+       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
         backgroundImage: 'url(/assets/game-bg.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
