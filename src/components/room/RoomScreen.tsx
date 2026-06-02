@@ -117,7 +117,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
           backgroundRepeat: 'no-repeat',
         }} />
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 1,
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
           background: 'rgba(0,0,0,0.4)',
           pointerEvents: 'none',
         }} />
@@ -242,7 +242,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         backgroundRepeat: 'no-repeat',
       }} />
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 1,
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
         background: 'rgba(0,0,0,0.45)',
         pointerEvents: 'none',
       }} />
