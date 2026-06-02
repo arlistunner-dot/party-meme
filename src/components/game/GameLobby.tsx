@@ -16,7 +16,6 @@ const TOPICS = [
   { id: 'exclusive', name: 'Eksklyuziv', icon: '💎', color: '#9b5de5' },
 ];
 
-// Demo inventar kartalari
 const DEMO_INVENTORY = [
   { id: 'c1', title: 'WiFi yo\'qolgan', category: 'tech', icon: '💻', power: 7 },
   { id: 'c2', title: 'Nonushta qilmaslik', category: 'lifestyle', icon: '🏠', power: 5 },
@@ -37,29 +36,22 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     });
     return votes;
   });
-
-  // Tayyor belgilash
   const [isReady, setIsReady] = useState(false);
 
-  // Tayyorlash — 2 ta karta + ovoz
   const canReady = selectedCards.length === 2 && votedTopic !== null;
 
-  // 30 soniya taymer
   useEffect(() => {
     if (timeLeft <= 0) {
       hapticSuccess();
       onStart();
       return;
     }
-
     const timer = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
     }, 1000);
-
     return () => clearInterval(timer);
   }, [timeLeft, onStart]);
 
-  // Simulyatsiya — boshqa o'yinchilar ovoz beradi
   useEffect(() => {
     const interval = setInterval(() => {
       const randomTopic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
@@ -68,11 +60,9 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
         [randomTopic.id]: prev[randomTopic.id] + 1,
       }));
     }, 2000 + Math.random() * 3000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Karta tanlash
   const toggleCard = (cardId: string) => {
     hapticImpact('light');
     if (selectedCards.includes(cardId)) {
@@ -86,19 +76,15 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     }
   };
 
-  // Mavzuga ovoz berish
   const voteTopic = (topicId: string) => {
     hapticSelection();
     if (votedTopic === topicId) return;
-
-    // Eski ovozni olib tashlash
     if (votedTopic) {
       setTopicVotes((prev) => ({
         ...prev,
         [votedTopic]: Math.max(0, prev[votedTopic] - 1),
       }));
     }
-
     setVotedTopic(topicId);
     setTopicVotes((prev) => ({
       ...prev,
@@ -106,7 +92,6 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     }));
   };
 
-  // Tayyor tugmasi
   const handleReady = () => {
     if (!canReady) return;
     hapticSuccess();
@@ -114,10 +99,8 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     toast('Tayyor! Boshqa o\'yinchilar kutilmoqda...', 'success');
   };
 
-  // Rang
   const timerColor = timeLeft <= 10 ? '#ff4757' : timeLeft <= 20 ? '#ffa502' : '#2ed573';
 
-  // Eng ko'p ovoz olgan mavzu
   const topTopic = TOPICS.reduce((max, t) =>
     (topicVotes[t.id] || 0) > (topicVotes[max.id] || 0) ? t : max
   );
@@ -127,139 +110,110 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        background: 'var(--bg-primary)',
+        height: '100dvh',
+        position: 'relative',
         overflow: 'hidden',
       }}
     >
+      {/* ====== FON RASMI — GameScreen dagidek ====== */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        backgroundImage: 'url(/assets/game-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1,
+        background: 'rgba(0,0,0,0.5)',
+        pointerEvents: 'none',
+      }} />
+
       {/* HEADER */}
       <div
         style={{
+          position: 'relative', zIndex: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 16px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
           borderBottom: '1px solid rgba(255,255,255,0.05)',
+          background: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(10px)',
           flexShrink: 0,
         }}
       >
         <button
-          onClick={() => {
-            hapticImpact('light');
-            onCancel();
-          }}
+          onClick={() => { hapticImpact('light'); onCancel(); }}
           style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '10px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: '16px',
-            color: '#fff',
+            width: '34px', height: '34px', borderRadius: '10px',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', fontSize: '16px', color: '#fff',
           }}
-        >
-          ←
-        </button>
+        >←</button>
 
         <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '14px',
-              fontWeight: 700,
-              color: '#fff',
-              letterSpacing: '2px',
-            }}
-          >
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: '14px',
+            fontWeight: 700, color: '#fff', letterSpacing: '2px',
+            textShadow: '0 2px 6px rgba(0,0,0,0.5)',
+          }}>
             TAYYORLANISH
           </div>
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '10px',
-              color: 'rgba(255,255,255,0.4)',
-            }}
-          >
+          <div style={{
+            fontFamily: 'var(--font-body)', fontSize: '10px',
+            color: 'rgba(255,255,255,0.4)',
+          }}>
             7/7 o'yinchi
           </div>
         </div>
 
-        {/* Taymer */}
-        <div
-          style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            background: `rgba(${timeLeft <= 10 ? '255,71,87' : timeLeft <= 20 ? '255,165,0' : '46,213,115'},0.12)`,
-            border: `2px solid ${timerColor}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: 'var(--font-display)',
-            fontSize: '16px',
-            fontWeight: 700,
-            color: timerColor,
-          }}
-        >
+        <div style={{
+          width: '44px', height: '44px', borderRadius: '50%',
+          background: `rgba(${timeLeft <= 10 ? '255,71,87' : timeLeft <= 20 ? '255,165,0' : '46,213,115'},0.12)`,
+          border: `2px solid ${timerColor}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'var(--font-display)', fontSize: '16px',
+          fontWeight: 700, color: timerColor,
+        }}>
           {timeLeft}
         </div>
       </div>
 
       {/* KONTENT */}
-      <div
-        style={{
-          flex: 1,
-          padding: '12px 16px',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-        }}
-      >
+      <div style={{
+        position: 'relative', zIndex: 10,
+        flex: 1, padding: '12px 16px', overflowY: 'auto',
+        display: 'flex', flexDirection: 'column', gap: '16px',
+      }}>
         {/* === KARTA TANLASH === */}
         <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#fff',
-              }}
-            >
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '10px',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '13px',
+              fontWeight: 700, color: '#fff',
+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+            }}>
               🎴 KARTA TANLA
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '12px',
-                fontWeight: 700,
-                color: selectedCards.length === 2 ? '#2ed573' : 'rgba(255,255,255,0.4)',
-              }}
-            >
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '12px',
+              fontWeight: 700,
+              color: selectedCards.length === 2 ? '#2ed573' : 'rgba(255,255,255,0.4)',
+            }}>
               {selectedCards.length}/2
             </div>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '8px',
-            }}
-          >
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px',
+          }}>
             {DEMO_INVENTORY.map((card) => {
               const isSelected = selectedCards.includes(card.id);
               return (
@@ -267,81 +221,42 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
                   key={card.id}
                   onClick={() => toggleCard(card.id)}
                   style={{
-                    padding: '10px',
-                    borderRadius: '12px',
-                    border: isSelected
-                      ? '2px solid #00b4d8'
-                      : '1px solid rgba(255,255,255,0.06)',
-                    background: isSelected
-                      ? 'rgba(0,180,216,0.1)'
-                      : 'rgba(255,255,255,0.03)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    position: 'relative',
-                    transition: 'all 0.2s ease',
+                    padding: '10px', borderRadius: '12px',
+                    border: isSelected ? '2px solid #00b4d8' : '1px solid rgba(255,255,255,0.08)',
+                    background: isSelected ? 'rgba(0,180,216,0.15)' : 'rgba(0,0,0,0.45)',
+                    backdropFilter: 'blur(6px)',
+                    cursor: 'pointer', textAlign: 'left',
+                    position: 'relative', transition: 'all 0.2s ease',
                   }}
                 >
                   {isSelected && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '6px',
-                        right: '6px',
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        background: '#00b4d8',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px',
-                        color: '#fff',
-                        fontWeight: 700,
-                      }}
-                    >
-                      ✓
-                    </div>
+                    <div style={{
+                      position: 'absolute', top: '6px', right: '6px',
+                      width: '18px', height: '18px', borderRadius: '50%',
+                      background: '#00b4d8',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '10px', color: '#fff', fontWeight: 700,
+                    }}>✓</div>
                   )}
-                  <div style={{ fontSize: '20px', marginBottom: '4px' }}>
-                    {card.icon}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#fff',
-                      marginBottom: '2px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <div style={{ fontSize: '20px', marginBottom: '4px' }}>{card.icon}</div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontSize: '11px',
+                    fontWeight: 700, color: '#fff', marginBottom: '2px',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
                     {card.title}
                   </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '9px',
-                        color: 'rgba(255,255,255,0.3)',
-                      }}
-                    >
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{
+                      fontFamily: 'var(--font-body)', fontSize: '9px',
+                      color: 'rgba(255,255,255,0.3)',
+                    }}>
                       {card.category}
                     </span>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '9px',
-                        fontWeight: 700,
-                        color: '#ff006e',
-                      }}
-                    >
+                    <span style={{
+                      fontFamily: 'var(--font-display)', fontSize: '9px',
+                      fontWeight: 700, color: '#ff006e',
+                    }}>
                       ⚡{card.power}
                     </span>
                   </div>
@@ -353,44 +268,29 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
 
         {/* === MAVZUGA OVOZ BERISH === */}
         <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#fff',
-              }}
-            >
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '10px',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '13px',
+              fontWeight: 700, color: '#fff',
+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+            }}>
               📋 MAVZU TANLA
             </div>
             {votedTopic && (
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '10px',
-                  color: '#2ed573',
-                }}
-              >
+              <div style={{
+                fontFamily: 'var(--font-body)', fontSize: '10px', color: '#2ed573',
+              }}>
                 ✓ Ovoz berildi
               </div>
             )}
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '8px',
-            }}
-          >
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px',
+          }}>
             {TOPICS.map((topic) => {
               const isSelected = votedTopic === topic.id;
               const votes = topicVotes[topic.id] || 0;
@@ -402,57 +302,32 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
                   key={topic.id}
                   onClick={() => voteTopic(topic.id)}
                   style={{
-                    padding: '12px',
-                    borderRadius: '12px',
-                    border: isSelected
-                      ? `2px solid ${topic.color}`
-                      : '1px solid rgba(255,255,255,0.06)',
-                    background: isSelected
-                      ? `${topic.color}15`
-                      : 'rgba(255,255,255,0.03)',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    position: 'relative',
-                    overflow: 'hidden',
+                    padding: '12px', borderRadius: '12px',
+                    border: isSelected ? `2px solid ${topic.color}` : '1px solid rgba(255,255,255,0.08)',
+                    background: isSelected ? `${topic.color}15` : 'rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(6px)',
+                    cursor: 'pointer', textAlign: 'center',
+                    position: 'relative', overflow: 'hidden',
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  {/* Ovoz progress fon */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      width: `${votePercent}%`,
-                      height: '3px',
-                      background: topic.color,
-                      borderRadius: '0 2px 0 0',
-                      transition: 'width 0.3s ease',
-                    }}
-                  />
-
-                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>
-                    {topic.icon}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      color: isSelected ? topic.color : '#fff',
-                    }}
-                  >
+                  <div style={{
+                    position: 'absolute', bottom: 0, left: 0,
+                    width: `${votePercent}%`, height: '3px',
+                    background: topic.color, borderRadius: '0 2px 0 0',
+                    transition: 'width 0.3s ease',
+                  }} />
+                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>{topic.icon}</div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontSize: '12px',
+                    fontWeight: 700, color: isSelected ? topic.color : '#fff',
+                  }}>
                     {topic.name}
                   </div>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      color: 'rgba(255,255,255,0.3)',
-                      marginTop: '2px',
-                    }}
-                  >
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontSize: '10px',
+                    fontWeight: 700, color: 'rgba(255,255,255,0.3)', marginTop: '2px',
+                  }}>
                     {votes} ovoz
                   </div>
                 </button>
@@ -462,33 +337,27 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
         </div>
       </div>
 
-      {/* PASTKI QISM — TAYYOR TUGMASI */}
-      <div
-        style={{
-          padding: '12px 16px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          flexShrink: 0,
-        }}
-      >
+      {/* PASTKI QISM */}
+      <div style={{
+        position: 'relative', zIndex: 20,
+        padding: '12px 16px',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(10px)',
+        flexShrink: 0,
+      }}>
         {isReady ? (
-          <div
-            style={{
-              padding: '14px',
-              borderRadius: '14px',
-              background: 'rgba(46,213,115,0.1)',
-              border: '1px solid rgba(46,213,115,0.2)',
-              textAlign: 'center',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '14px',
-                fontWeight: 700,
-                color: '#2ed573',
-              }}
-            >
+          <div style={{
+            padding: '14px', borderRadius: '14px',
+            background: 'rgba(46,213,115,0.1)',
+            border: '1px solid rgba(46,213,115,0.2)',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '14px',
+              fontWeight: 700, color: '#2ed573',
+            }}>
               ✅ TAYYOR! Boshqa o'yinchilar kutilmoqda...
             </div>
           </div>
@@ -497,20 +366,16 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
             onClick={handleReady}
             disabled={!canReady}
             style={{
-              width: '100%',
-              padding: '14px',
-              borderRadius: '14px',
-              border: 'none',
+              width: '100%', padding: '14px', borderRadius: '14px', border: 'none',
               background: canReady
                 ? 'linear-gradient(135deg, #ff006e, #ff4757)'
-                : 'rgba(255,255,255,0.06)',
-              fontFamily: 'var(--font-display)',
-              fontSize: '15px',
-              fontWeight: 700,
-              letterSpacing: '2px',
+                : 'rgba(0,0,0,0.4)',
+              fontFamily: 'var(--font-display)', fontSize: '15px',
+              fontWeight: 700, letterSpacing: '2px',
               color: canReady ? '#fff' : 'rgba(255,255,255,0.3)',
               cursor: canReady ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s ease',
+              boxShadow: canReady ? '0 4px 20px rgba(255,0,110,0.3)' : 'none',
             }}
           >
             {!selectedCards.length
