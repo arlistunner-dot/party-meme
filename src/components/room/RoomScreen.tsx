@@ -11,7 +11,6 @@ interface RoomScreenProps {
   onStartGame?: () => void;
 }
 
-// Random kod generatsiya
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -21,7 +20,6 @@ function generateRoomCode(): string {
   return code;
 }
 
-// Simulyatsiya — o'yinchilar
 const FAKE_PLAYERS = [
   { id: 'p1', name: 'Sardor', avatar: '😎', online: true },
   { id: 'p2', name: 'Dilnoza', avatar: '🤠', online: true },
@@ -35,7 +33,6 @@ const FAKE_PLAYERS = [
 export default function RoomScreen({ onNavigate, initialMode = 'create', onStartGame }: RoomScreenProps) {
   const { toast } = useToast();
 
-  // CREATE mode
   const [roomCode] = useState(generateRoomCode);
   const [players, setPlayers] = useState<any[]>([
     { id: 'me', name: 'Siz', avatar: '🤖', isHost: true },
@@ -43,11 +40,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
   const [maxPlayers, setMaxPlayers] = useState(7);
   const [showInvite, setShowInvite] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-
-  // JOIN mode
   const [joinCode, setJoinCode] = useState('');
 
-  // Simulyatsiya — o'yinchilar qo'shilishi (faqat create mode)
   useEffect(() => {
     if (initialMode !== 'create') return;
     if (players.length >= maxPlayers) return;
@@ -66,11 +60,9 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
     return () => clearTimeout(timer);
   }, [players.length, maxPlayers, initialMode]);
 
-  // Min o'yinchi
   const MIN_PLAYERS = 4;
   const canStart = players.length >= MIN_PLAYERS;
 
-  // Do'stlarni taklif qilish
   const handleInvite = () => {
     const tg = window.Telegram?.WebApp;
     const inviteText = `🎮 PARTY MEME - O'yinga qo'shiling!\n\n🔑 Xona kodi: ${roomCode}\n\nO'yinchi: ${players.length}/${maxPlayers}\n\nO'ynash uchun botga kiring!`;
@@ -86,7 +78,6 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
     }
   };
 
-  // Kodni nusxalash
   const copyCode = () => {
     navigator.clipboard.writeText(roomCode).then(() => {
       hapticSuccess();
@@ -106,19 +97,17 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
           height: '100dvh',
           position: 'relative',
           overflow: 'hidden',
-        }}
-      >
-        {/* FON RASMI */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
           backgroundImage: 'url(/assets/game-bg.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-        }} />
+        }}
+      >
+        {/* Qoraytirish — butun ekran */}
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
-          background: 'rgba(0,0,0,0.4)',
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
+          background: 'rgba(0,0,0,0.5)',
           pointerEvents: 'none',
         }} />
 
@@ -139,16 +128,11 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         >
           <div style={{ fontSize: '48px' }}>🔗</div>
 
-          <h2
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '20px',
-              fontWeight: 700,
-              color: '#fff',
-              margin: 0,
-              textShadow: '0 2px 8px rgba(0,0,0,0.6)',
-            }}
-          >
+          <h2 style={{
+            fontFamily: 'var(--font-display)', fontSize: '20px',
+            fontWeight: 700, color: '#fff', margin: 0,
+            textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+          }}>
             XONA KODI
           </h2>
 
@@ -158,21 +142,15 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             placeholder="KODNI KIRITING"
             maxLength={6}
             style={{
-              width: '100%',
-              maxWidth: '240px',
-              padding: '16px',
+              width: '100%', maxWidth: '240px', padding: '16px',
               borderRadius: '14px',
-              background: 'rgba(0,0,0,0.5)',
+              background: 'rgba(0,0,0,0.6)',
               backdropFilter: 'blur(10px)',
               border: '2px solid rgba(46,213,115,0.25)',
               textAlign: 'center',
-              fontFamily: 'var(--font-display)',
-              fontSize: '28px',
-              fontWeight: 700,
-              color: '#2ed573',
-              letterSpacing: '8px',
-              outline: 'none',
-              boxSizing: 'border-box',
+              fontFamily: 'var(--font-display)', fontSize: '28px',
+              fontWeight: 700, color: '#2ed573',
+              letterSpacing: '8px', outline: 'none', boxSizing: 'border-box',
             }}
           />
 
@@ -185,19 +163,13 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             }}
             disabled={joinCode.length < 6}
             style={{
-              width: '100%',
-              maxWidth: '240px',
-              padding: '14px',
-              borderRadius: '14px',
-              border: 'none',
-              background:
-                joinCode.length >= 6
-                  ? 'linear-gradient(135deg, #2ed573, #1abc9c)'
-                  : 'rgba(0,0,0,0.4)',
-              fontFamily: 'var(--font-display)',
-              fontSize: '15px',
-              fontWeight: 700,
-              letterSpacing: '2px',
+              width: '100%', maxWidth: '240px', padding: '14px',
+              borderRadius: '14px', border: 'none',
+              background: joinCode.length >= 6
+                ? 'linear-gradient(135deg, #2ed573, #1abc9c)'
+                : 'rgba(0,0,0,0.5)',
+              fontFamily: 'var(--font-display)', fontSize: '15px',
+              fontWeight: 700, letterSpacing: '2px',
               color: joinCode.length >= 6 ? '#fff' : 'rgba(255,255,255,0.3)',
               cursor: joinCode.length >= 6 ? 'pointer' : 'not-allowed',
               backdropFilter: 'blur(6px)',
@@ -206,15 +178,11 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             QO'SHILISH
           </button>
 
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.4)',
-              textAlign: 'center',
-              textShadow: '0 2px 6px rgba(0,0,0,0.6)',
-            }}
-          >
+          <div style={{
+            fontFamily: 'var(--font-body)', fontSize: '12px',
+            color: 'rgba(255,255,255,0.5)', textAlign: 'center',
+            textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+          }}>
             Do'stingiz bergan 6 belgili kodni kiriting
           </div>
         </div>
@@ -231,165 +199,104 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         height: '100dvh',
         position: 'relative',
         overflow: 'hidden',
-      }}
-    >
-      {/* ====== FON RASMI ====== */}
-      <div style={{
-       position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
         backgroundImage: 'url(/assets/game-bg.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-      }} />
+      }}
+    >
+      {/* Qoraytirish — butun ekran */}
       <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
-        background: 'rgba(0,0,0,0.45)',
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
+        background: 'rgba(0,0,0,0.5)',
         pointerEvents: 'none',
       }} />
 
       {/* HEADER */}
-      <div
-        style={{
-          position: 'relative', zIndex: 20,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
-          background: 'rgba(0,0,0,0.4)',
-          backdropFilter: 'blur(10px)',
-          flexShrink: 0,
-        }}
-      >
+      <div style={{
+        position: 'relative', zIndex: 20,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 16px',
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(10px)',
+        flexShrink: 0,
+      }}>
         <button
-          onClick={() => {
-            hapticImpact('light');
-            onNavigate('home');
-          }}
+          onClick={() => { hapticImpact('light'); onNavigate('home'); }}
           style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '10px',
+            width: '34px', height: '34px', borderRadius: '10px',
             background: 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,255,255,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: '16px',
-            color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', fontSize: '16px', color: '#fff',
           }}
-        >
-          ←
-        </button>
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '16px',
-            fontWeight: 700,
-            letterSpacing: '2px',
-            color: '#fff',
-            margin: 0,
-            textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-          }}
-        >
+        >←</button>
+
+        <h1 style={{
+          fontFamily: 'var(--font-display)', fontSize: '16px',
+          fontWeight: 700, letterSpacing: '2px', color: '#fff', margin: 0,
+          textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+        }}>
           XONA
         </h1>
+
         <button
-          onClick={() => {
-            hapticSelection();
-            setShowSettings(!showSettings);
-          }}
+          onClick={() => { hapticSelection(); setShowSettings(!showSettings); }}
           style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '10px',
-            background: showSettings
-              ? 'rgba(255,0,110,0.15)'
-              : 'rgba(255,255,255,0.08)',
+            width: '34px', height: '34px', borderRadius: '10px',
+            background: showSettings ? 'rgba(255,0,110,0.15)' : 'rgba(255,255,255,0.08)',
             border: '1px solid rgba(255,255,255,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: '16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', fontSize: '16px',
           }}
-        >
-          ⚙️
-        </button>
+        >⚙️</button>
       </div>
 
       {/* KONTENT */}
-      <div
-        style={{
-          position: 'relative', zIndex: 10,
-          flex: 1,
-          padding: '16px',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-        }}
-      >
+      <div style={{
+        position: 'relative', zIndex: 10,
+        flex: 1, padding: '16px', overflowY: 'auto',
+        display: 'flex', flexDirection: 'column', gap: '16px',
+      }}>
         {/* SOZLAMALAR */}
         {showSettings && (
-          <div
-            style={{
-              padding: '14px 16px',
-              borderRadius: '14px',
-              background: 'rgba(0,0,0,0.5)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              animation: 'fadeUp 0.2s ease forwards',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#fff',
-                marginBottom: '12px',
-              }}
-            >
+          <div style={{
+            padding: '14px 16px', borderRadius: '14px',
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            animation: 'fadeUp 0.2s ease forwards',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '13px',
+              fontWeight: 700, color: '#fff', marginBottom: '12px',
+            }}>
               ⚙️ XONA SOZLAMALARI
             </div>
-
-            {/* O'yinchi soni */}
             <div>
-              <div
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.4)',
-                  marginBottom: '8px',
-                }}
-              >
+              <div style={{
+                fontFamily: 'var(--font-body)', fontSize: '11px',
+                color: 'rgba(255,255,255,0.4)', marginBottom: '8px',
+              }}>
                 Maksimal o'yinchi soni
               </div>
               <div style={{ display: 'flex', gap: '6px' }}>
                 {[4, 5, 6, 7].map((num) => (
                   <button
                     key={num}
-                    onClick={() => {
-                      hapticSelection();
-                      setMaxPlayers(num);
-                    }}
+                    onClick={() => { hapticSelection(); setMaxPlayers(num); }}
                     style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '8px',
-                      border:
-                        maxPlayers === num
-                          ? '1px solid rgba(255,0,110,0.5)'
-                          : '1px solid rgba(255,255,255,0.08)',
-                      background:
-                        maxPlayers === num
-                          ? 'rgba(255,0,110,0.12)'
-                          : 'rgba(0,0,0,0.3)',
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '16px',
+                      flex: 1, padding: '8px', borderRadius: '8px',
+                      border: maxPlayers === num
+                        ? '1px solid rgba(255,0,110,0.5)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                      background: maxPlayers === num
+                        ? 'rgba(255,0,110,0.12)'
+                        : 'rgba(0,0,0,0.4)',
+                      fontFamily: 'var(--font-display)', fontSize: '16px',
                       fontWeight: 700,
                       color: maxPlayers === num ? '#ff006e' : 'rgba(255,255,255,0.4)',
                       cursor: 'pointer',
@@ -404,114 +311,71 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         )}
 
         {/* XONA KODI */}
-        <div
-          style={{
-            padding: '20px',
-            borderRadius: '16px',
-            background: 'rgba(0,0,0,0.45)',
-            backdropFilter: 'blur(10px)',
-            border: '2px dashed rgba(255,0,110,0.25)',
-            textAlign: 'center',
-          }}
-        >
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.4)',
-              marginBottom: '8px',
-              letterSpacing: '2px',
-            }}
-          >
+        <div style={{
+          padding: '20px', borderRadius: '16px',
+          background: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(10px)',
+          border: '2px dashed rgba(255,0,110,0.25)',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            fontFamily: 'var(--font-body)', fontSize: '11px',
+            color: 'rgba(255,255,255,0.4)', marginBottom: '8px', letterSpacing: '2px',
+          }}>
             XONA KODI
           </div>
-          <div
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '36px',
-              fontWeight: 700,
-              color: '#ff006e',
-              letterSpacing: '8px',
-              marginBottom: '12px',
-              textShadow: '0 0 20px rgba(255,0,110,0.3)',
-            }}
-          >
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: '36px',
+            fontWeight: 700, color: '#ff006e',
+            letterSpacing: '8px', marginBottom: '12px',
+            textShadow: '0 0 20px rgba(255,0,110,0.3)',
+          }}>
             {roomCode}
           </div>
-
-          {/* Tugmalar */}
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-            <button
-              onClick={copyCode}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(0,0,0,0.35)',
-                backdropFilter: 'blur(6px)',
-                fontFamily: 'var(--font-body)',
-                fontSize: '12px',
-                color: 'rgba(255,255,255,0.5)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
+            <button onClick={copyCode} style={{
+              padding: '8px 16px', borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(0,0,0,0.45)',
+              backdropFilter: 'blur(6px)',
+              fontFamily: 'var(--font-body)', fontSize: '12px',
+              color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>
               📋 Nusxalash
             </button>
-            <button
-              onClick={handleInvite}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'rgba(0,136,204,0.2)',
-                backdropFilter: 'blur(6px)',
-                fontFamily: 'var(--font-body)',
-                fontSize: '12px',
-                color: '#0088cc',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
+            <button onClick={handleInvite} style={{
+              padding: '8px 16px', borderRadius: '8px', border: 'none',
+              background: 'rgba(0,136,204,0.25)',
+              backdropFilter: 'blur(6px)',
+              fontFamily: 'var(--font-body)', fontSize: '12px',
+              color: '#0088cc', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>
               ✈️ Telegram
             </button>
           </div>
         </div>
 
-        {/* O'YINCHILAR RO'YXATI */}
+        {/* O'YINCHILAR */}
         <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#fff',
-                textShadow: '0 2px 6px rgba(0,0,0,0.5)',
-              }}
-            >
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '10px',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '13px',
+              fontWeight: 700, color: '#fff',
+              textShadow: '0 2px 6px rgba(0,0,0,0.5)',
+            }}>
               👥 O'YINCHILAR
             </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: canStart ? '#2ed573' : 'rgba(255,255,255,0.4)',
-                textShadow: canStart ? '0 0 8px rgba(46,213,115,0.3)' : 'none',
-              }}
-            >
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '13px',
+              fontWeight: 700,
+              color: canStart ? '#2ed573' : 'rgba(255,255,255,0.4)',
+              textShadow: canStart ? '0 0 8px rgba(46,213,115,0.3)' : 'none',
+            }}>
               {players.length}/{maxPlayers}
             </div>
           </div>
@@ -521,118 +385,72 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
               <div
                 key={player.id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
-                  background:
-                    i === 0
-                      ? 'rgba(0,0,0,0.45)'
-                      : 'rgba(0,0,0,0.35)',
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '12px 14px', borderRadius: '12px',
+                  background: i === 0 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.45)',
                   backdropFilter: 'blur(8px)',
-                  border:
-                    i === 0
-                      ? '1px solid rgba(255,0,110,0.15)'
-                      : '1px solid rgba(255,255,255,0.06)',
+                  border: i === 0
+                    ? '1px solid rgba(255,0,110,0.15)'
+                    : '1px solid rgba(255,255,255,0.06)',
                   animation: 'fadeUp 0.3s ease forwards',
                   animationDelay: `${i * 0.05}s`,
                   opacity: 0,
                 }}
               >
-                {/* Avatar */}
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    position: 'relative',
-                  }}
-                >
+                <div style={{
+                  width: '38px', height: '38px', borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(4px)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '20px', position: 'relative',
+                }}>
                   {player.avatar}
-                  {/* Online belgisi */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: '0',
-                      right: '0',
-                      width: '10px',
-                      height: '10px',
-                      borderRadius: '50%',
-                      background: '#2ed573',
-                      border: '2px solid rgba(0,0,0,0.6)',
-                    }}
-                  />
+                  <div style={{
+                    position: 'absolute', bottom: '0', right: '0',
+                    width: '10px', height: '10px', borderRadius: '50%',
+                    background: '#2ed573', border: '2px solid rgba(0,0,0,0.6)',
+                  }} />
                 </div>
-
-                {/* Ism */}
                 <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: '#fff',
-                    }}
-                  >
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontSize: '14px',
+                    fontWeight: 600, color: '#fff',
+                  }}>
                     {player.name}
                   </div>
                   {player.isHost && (
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '10px',
-                        color: '#ff006e',
-                      }}
-                    >
+                    <div style={{
+                      fontFamily: 'var(--font-body)', fontSize: '10px', color: '#ff006e',
+                    }}>
                       ⭐ Xona egasi
                     </div>
                   )}
                 </div>
-
-                {/* Status */}
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    color: '#2ed573',
-                    textShadow: '0 0 6px rgba(46,213,115,0.3)',
-                  }}
-                >
+                <div style={{
+                  fontFamily: 'var(--font-display)', fontSize: '10px',
+                  fontWeight: 700, color: '#2ed573',
+                  textShadow: '0 0 6px rgba(46,213,115,0.3)',
+                }}>
                   ✓ TAYYOR
                 </div>
               </div>
             ))}
 
-            {/* Bo'sh o'rinlar */}
             {Array.from({ length: maxPlayers - players.length }).map((_, i) => (
               <div
                 key={`empty-${i}`}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '12px 14px',
-                  borderRadius: '12px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '12px 14px', borderRadius: '12px',
                   border: '1.5px dashed rgba(255,255,255,0.06)',
-                  background: 'rgba(0,0,0,0.2)',
+                  background: 'rgba(0,0,0,0.3)',
                   backdropFilter: 'blur(4px)',
                 }}
               >
-                <span
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '12px',
-                    color: 'rgba(255,255,255,0.15)',
-                  }}
-                >
+                <span style={{
+                  fontFamily: 'var(--font-body)', fontSize: '12px',
+                  color: 'rgba(255,255,255,0.15)',
+                }}>
                   Kutilmoqda...
                 </span>
               </div>
@@ -640,54 +458,34 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
           </div>
         </div>
 
-        {/* TAKLIF QILISH */}
+        {/* TAKLIF */}
         <button
-          onClick={() => {
-            hapticSelection();
-            setShowInvite(!showInvite);
-          }}
+          onClick={() => { hapticSelection(); setShowInvite(!showInvite); }}
           style={{
-            width: '100%',
-            padding: '12px 16px',
-            borderRadius: '12px',
+            width: '100%', padding: '12px 16px', borderRadius: '12px',
             border: '1.5px dashed rgba(0,136,204,0.3)',
-            background: 'rgba(0,0,0,0.3)',
+            background: 'rgba(0,0,0,0.4)',
             backdropFilter: 'blur(6px)',
-            fontFamily: 'var(--font-display)',
-            fontSize: '13px',
-            fontWeight: 600,
-            color: '#0088cc',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
+            fontFamily: 'var(--font-display)', fontSize: '13px',
+            fontWeight: 600, color: '#0088cc', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
           }}
         >
           ✈️ DO'STLARNI TAKLIF QILISH
         </button>
 
-        {/* Online do'stlar */}
         {showInvite && (
-          <div
-            style={{
-              padding: '14px',
-              borderRadius: '14px',
-              background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              animation: 'fadeUp 0.2s ease forwards',
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '12px',
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.5)',
-                marginBottom: '10px',
-              }}
-            >
+          <div style={{
+            padding: '14px', borderRadius: '14px',
+            background: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            animation: 'fadeUp 0.2s ease forwards',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '12px',
+              fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '10px',
+            }}>
               🟢 ONLAYN DO'STLAR
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -697,24 +495,16 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                   <div
                     key={friend.id}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 12px',
-                      borderRadius: '10px',
-                      background: 'rgba(0,0,0,0.3)',
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      padding: '8px 12px', borderRadius: '10px',
+                      background: 'rgba(0,0,0,0.4)',
                     }}
                   >
                     <span style={{ fontSize: '18px' }}>{friend.avatar}</span>
-                    <div
-                      style={{
-                        flex: 1,
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: '#fff',
-                      }}
-                    >
+                    <div style={{
+                      flex: 1, fontFamily: 'var(--font-display)',
+                      fontSize: '13px', fontWeight: 600, color: '#fff',
+                    }}>
                       {friend.name}
                     </div>
                     <button
@@ -726,14 +516,9 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                       }}
                       disabled={!!isInvited}
                       style={{
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        border: 'none',
-                        background: isInvited
-                          ? 'rgba(46,213,115,0.12)'
-                          : 'rgba(0,136,204,0.15)',
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '10px',
+                        padding: '4px 10px', borderRadius: '6px', border: 'none',
+                        background: isInvited ? 'rgba(46,213,115,0.12)' : 'rgba(0,136,204,0.15)',
+                        fontFamily: 'var(--font-body)', fontSize: '10px',
                         fontWeight: 700,
                         color: isInvited ? '#2ed573' : '#0088cc',
                         cursor: isInvited ? 'default' : 'pointer',
@@ -749,18 +534,16 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         )}
       </div>
 
-      {/* PASTKI TUGMA — O'YIN BOSHLASH */}
-      <div
-        style={{
-          position: 'relative', zIndex: 20,
-          padding: '12px 16px',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          background: 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(10px)',
-          flexShrink: 0,
-        }}
-      >
+      {/* PASTKI TUGMA */}
+      <div style={{
+        position: 'relative', zIndex: 20,
+        padding: '12px 16px',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(10px)',
+        flexShrink: 0,
+      }}>
         <button
           onClick={() => {
             if (!canStart) return;
@@ -773,17 +556,12 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
           }}
           disabled={!canStart}
           style={{
-            width: '100%',
-            padding: '14px',
-            borderRadius: '14px',
-            border: 'none',
+            width: '100%', padding: '14px', borderRadius: '14px', border: 'none',
             background: canStart
               ? 'linear-gradient(135deg, #ff006e, #ff4757)'
-              : 'rgba(0,0,0,0.3)',
-            fontFamily: 'var(--font-display)',
-            fontSize: '15px',
-            fontWeight: 700,
-            letterSpacing: '2px',
+              : 'rgba(0,0,0,0.4)',
+            fontFamily: 'var(--font-display)', fontSize: '15px',
+            fontWeight: 700, letterSpacing: '2px',
             color: canStart ? '#fff' : 'rgba(255,255,255,0.2)',
             cursor: canStart ? 'pointer' : 'not-allowed',
             transition: 'all 0.2s ease',
