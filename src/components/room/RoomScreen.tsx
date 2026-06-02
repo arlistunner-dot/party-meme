@@ -79,7 +79,6 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
       try {
         tg.switchInlineQuery(inviteText);
       } catch {
-        // Fallback
         copyCode();
       }
     } else {
@@ -104,15 +103,32 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         style={{
           display: 'flex',
           flexDirection: 'column',
-          height: '100vh',
-          background: 'var(--bg-primary)',
+          height: '100dvh',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <Header title="XONAGA QO'SHILISH" showBack onBack={() => onNavigate('home')} />
+        {/* FON RASMI */}
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 0,
+          backgroundImage: 'url(/assets/game-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }} />
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1,
+          background: 'rgba(0,0,0,0.4)',
+          pointerEvents: 'none',
+        }} />
+
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <Header title="XONAGA QO'SHILISH" showBack onBack={() => onNavigate('home')} />
+        </div>
 
         <div
           style={{
-            flex: 1,
+            position: 'relative', zIndex: 10, flex: 1,
             padding: '20px 16px',
             display: 'flex',
             flexDirection: 'column',
@@ -130,6 +146,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
               fontWeight: 700,
               color: '#fff',
               margin: 0,
+              textShadow: '0 2px 8px rgba(0,0,0,0.6)',
             }}
           >
             XONA KODI
@@ -145,7 +162,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
               maxWidth: '240px',
               padding: '16px',
               borderRadius: '14px',
-              background: 'rgba(255,255,255,0.04)',
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(10px)',
               border: '2px solid rgba(46,213,115,0.25)',
               textAlign: 'center',
               fontFamily: 'var(--font-display)',
@@ -175,13 +193,14 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
               background:
                 joinCode.length >= 6
                   ? 'linear-gradient(135deg, #2ed573, #1abc9c)'
-                  : 'rgba(255,255,255,0.06)',
+                  : 'rgba(0,0,0,0.4)',
               fontFamily: 'var(--font-display)',
               fontSize: '15px',
               fontWeight: 700,
               letterSpacing: '2px',
               color: joinCode.length >= 6 ? '#fff' : 'rgba(255,255,255,0.3)',
               cursor: joinCode.length >= 6 ? 'pointer' : 'not-allowed',
+              backdropFilter: 'blur(6px)',
             }}
           >
             QO'SHILISH
@@ -191,8 +210,9 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             style={{
               fontFamily: 'var(--font-body)',
               fontSize: '12px',
-              color: 'rgba(255,255,255,0.3)',
+              color: 'rgba(255,255,255,0.4)',
               textAlign: 'center',
+              textShadow: '0 2px 6px rgba(0,0,0,0.6)',
             }}
           >
             Do'stingiz bergan 6 belgili kodni kiriting
@@ -208,20 +228,37 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        background: 'var(--bg-primary)',
+        height: '100dvh',
+        position: 'relative',
         overflow: 'hidden',
       }}
     >
+      {/* ====== FON RASMI ====== */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        backgroundImage: 'url(/assets/game-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1,
+        background: 'rgba(0,0,0,0.45)',
+        pointerEvents: 'none',
+      }} />
+
       {/* HEADER */}
       <div
         style={{
+          position: 'relative', zIndex: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 16px',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
           borderBottom: '1px solid rgba(255,255,255,0.05)',
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(10px)',
           flexShrink: 0,
         }}
       >
@@ -234,8 +271,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             width: '34px',
             height: '34px',
             borderRadius: '10px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -254,6 +291,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             letterSpacing: '2px',
             color: '#fff',
             margin: 0,
+            textShadow: '0 2px 8px rgba(0,0,0,0.5)',
           }}
         >
           XONA
@@ -269,8 +307,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             borderRadius: '10px',
             background: showSettings
               ? 'rgba(255,0,110,0.15)'
-              : 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
+              : 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -285,6 +323,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
       {/* KONTENT */}
       <div
         style={{
+          position: 'relative', zIndex: 10,
           flex: 1,
           padding: '16px',
           overflowY: 'auto',
@@ -299,8 +338,9 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             style={{
               padding: '14px 16px',
               borderRadius: '14px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.08)',
               animation: 'fadeUp 0.2s ease forwards',
             }}
           >
@@ -343,11 +383,11 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                       border:
                         maxPlayers === num
                           ? '1px solid rgba(255,0,110,0.5)'
-                          : '1px solid rgba(255,255,255,0.06)',
+                          : '1px solid rgba(255,255,255,0.08)',
                       background:
                         maxPlayers === num
                           ? 'rgba(255,0,110,0.12)'
-                          : 'rgba(255,255,255,0.03)',
+                          : 'rgba(0,0,0,0.3)',
                       fontFamily: 'var(--font-display)',
                       fontSize: '16px',
                       fontWeight: 700,
@@ -368,8 +408,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
           style={{
             padding: '20px',
             borderRadius: '16px',
-            background:
-              'linear-gradient(135deg, rgba(255,0,110,0.08), rgba(155,93,229,0.05))',
+            background: 'rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(10px)',
             border: '2px dashed rgba(255,0,110,0.25)',
             textAlign: 'center',
           }}
@@ -393,6 +433,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
               color: '#ff006e',
               letterSpacing: '8px',
               marginBottom: '12px',
+              textShadow: '0 0 20px rgba(255,0,110,0.3)',
             }}
           >
             {roomCode}
@@ -406,7 +447,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                 padding: '8px 16px',
                 borderRadius: '8px',
                 border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.04)',
+                background: 'rgba(0,0,0,0.35)',
+                backdropFilter: 'blur(6px)',
                 fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 color: 'rgba(255,255,255,0.5)',
@@ -425,6 +467,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                 borderRadius: '8px',
                 border: 'none',
                 background: 'rgba(0,136,204,0.2)',
+                backdropFilter: 'blur(6px)',
                 fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 color: '#0088cc',
@@ -455,6 +498,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                 fontSize: '13px',
                 fontWeight: 700,
                 color: '#fff',
+                textShadow: '0 2px 6px rgba(0,0,0,0.5)',
               }}
             >
               👥 O'YINCHILAR
@@ -465,6 +509,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                 fontSize: '13px',
                 fontWeight: 700,
                 color: canStart ? '#2ed573' : 'rgba(255,255,255,0.4)',
+                textShadow: canStart ? '0 0 8px rgba(46,213,115,0.3)' : 'none',
               }}
             >
               {players.length}/{maxPlayers}
@@ -483,12 +528,13 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                   borderRadius: '12px',
                   background:
                     i === 0
-                      ? 'rgba(255,0,110,0.06)'
-                      : 'rgba(255,255,255,0.03)',
+                      ? 'rgba(0,0,0,0.45)'
+                      : 'rgba(0,0,0,0.35)',
+                  backdropFilter: 'blur(8px)',
                   border:
                     i === 0
                       ? '1px solid rgba(255,0,110,0.15)'
-                      : '1px solid rgba(255,255,255,0.05)',
+                      : '1px solid rgba(255,255,255,0.06)',
                   animation: 'fadeUp 0.3s ease forwards',
                   animationDelay: `${i * 0.05}s`,
                   opacity: 0,
@@ -500,7 +546,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                     width: '38px',
                     height: '38px',
                     borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.06)',
+                    background: 'rgba(0,0,0,0.4)',
+                    backdropFilter: 'blur(4px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -519,7 +566,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                       height: '10px',
                       borderRadius: '50%',
                       background: '#2ed573',
-                      border: '2px solid var(--bg-primary)',
+                      border: '2px solid rgba(0,0,0,0.6)',
                     }}
                   />
                 </div>
@@ -556,6 +603,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                     fontSize: '10px',
                     fontWeight: 700,
                     color: '#2ed573',
+                    textShadow: '0 0 6px rgba(46,213,115,0.3)',
                   }}
                 >
                   ✓ TAYYOR
@@ -574,7 +622,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                   padding: '12px 14px',
                   borderRadius: '12px',
                   border: '1.5px dashed rgba(255,255,255,0.06)',
-                  background: 'rgba(255,255,255,0.015)',
+                  background: 'rgba(0,0,0,0.2)',
+                  backdropFilter: 'blur(4px)',
                 }}
               >
                 <span
@@ -602,7 +651,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             padding: '12px 16px',
             borderRadius: '12px',
             border: '1.5px dashed rgba(0,136,204,0.3)',
-            background: 'rgba(0,136,204,0.05)',
+            background: 'rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(6px)',
             fontFamily: 'var(--font-display)',
             fontSize: '13px',
             fontWeight: 600,
@@ -623,7 +673,8 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             style={{
               padding: '14px',
               borderRadius: '14px',
-              background: 'rgba(255,255,255,0.03)',
+              background: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(10px)',
               border: '1px solid rgba(255,255,255,0.06)',
               animation: 'fadeUp 0.2s ease forwards',
             }}
@@ -651,7 +702,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
                       gap: '10px',
                       padding: '8px 12px',
                       borderRadius: '10px',
-                      background: 'rgba(255,255,255,0.03)',
+                      background: 'rgba(0,0,0,0.3)',
                     }}
                   >
                     <span style={{ fontSize: '18px' }}>{friend.avatar}</span>
@@ -701,9 +752,12 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
       {/* PASTKI TUGMA — O'YIN BOSHLASH */}
       <div
         style={{
+          position: 'relative', zIndex: 20,
           padding: '12px 16px',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
           borderTop: '1px solid rgba(255,255,255,0.05)',
+          background: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(10px)',
           flexShrink: 0,
         }}
       >
@@ -725,7 +779,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             border: 'none',
             background: canStart
               ? 'linear-gradient(135deg, #ff006e, #ff4757)'
-              : 'rgba(255,255,255,0.06)',
+              : 'rgba(0,0,0,0.3)',
             fontFamily: 'var(--font-display)',
             fontSize: '15px',
             fontWeight: 700,
@@ -733,6 +787,7 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
             color: canStart ? '#fff' : 'rgba(255,255,255,0.2)',
             cursor: canStart ? 'pointer' : 'not-allowed',
             transition: 'all 0.2s ease',
+            boxShadow: canStart ? '0 4px 20px rgba(255,0,110,0.3)' : 'none',
           }}
         >
           {canStart
@@ -741,15 +796,16 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         </button>
       </div>
 
-            {/* CHAT */}
-      <RoomChat
-        players={players.map((p) => ({
-          id: p.id,
-          name: p.name,
-          avatar: p.avatar,
-        }))}
-      />
-
+      {/* CHAT */}
+      <div style={{ position: 'relative', zIndex: 20 }}>
+        <RoomChat
+          players={players.map((p) => ({
+            id: p.id,
+            name: p.name,
+            avatar: p.avatar,
+          }))}
+        />
+      </div>
     </div>
   );
 }
