@@ -401,7 +401,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               {/* QIZIL SAVOL KARTASI — stol ustida */}
               <div style={{
                 position: 'absolute',
-                top: '58%', left: '50%',
+                top: '62%', left: '50%',
                 transform: 'translate(-50%, -50%)',
                 zIndex: 20,
                 width: '45px', height: '75px',
