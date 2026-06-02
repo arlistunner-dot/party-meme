@@ -86,7 +86,7 @@ const SEAT_POSITIONS = [
   { top: '39%', left: '70%', transform: 'translate(-50%, -50%)' },
   { top: '52%', left: '83%', transform: 'translate(-50%, -50%)' },
   { top: '73%', left: '71%', transform: 'translate(-50%, -50%)' },
-  { top: '83%', left: '10%', transform: 'translate(-50%, -50%)' },
+  { top: '87%', left: '15%', transform: 'translate(-50%, -50%)' },
   { top: '52%', left: '17%', transform: 'translate(-50%, -50%)' },
 ];
 
