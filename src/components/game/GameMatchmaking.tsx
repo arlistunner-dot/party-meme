@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { hapticSuccess, hapticImpact } from '@/config/telegram';
 
 interface GameMatchmakingProps {
@@ -6,7 +6,6 @@ interface GameMatchmakingProps {
   onCancel: () => void;
 }
 
-// Simulyatsiya — keyin backendga ulanadi
 function generateFakePlayer(index: number): { id: string; name: string; avatar: string } {
   const names = [
     'Sardor', 'Dilnoza', 'Javohir', 'Malika', 'Sarvar',
@@ -27,7 +26,6 @@ export default function GameMatchmaking({ onReady, onCancel }: GameMatchmakingPr
 
   const TOTAL_PLAYERS = 7;
 
-  // Animatsiya nuqtalar
   useEffect(() => {
     const interval = setInterval(() => {
       setDots((prev) => (prev.length >= 3 ? '' : prev + '.'));
@@ -35,10 +33,8 @@ export default function GameMatchmaking({ onReady, onCancel }: GameMatchmakingPr
     return () => clearInterval(interval);
   }, []);
 
-  // Simulyatsiya — o'yinchilar qo'shilishi
   useEffect(() => {
     if (players.length >= TOTAL_PLAYERS) {
-      // Hamma to'plandi — tayyor
       const timer = setTimeout(() => {
         hapticSuccess();
         onReady();
@@ -46,7 +42,6 @@ export default function GameMatchmaking({ onReady, onCancel }: GameMatchmakingPr
       return () => clearTimeout(timer);
     }
 
-    // Tasodifiy vaqtda yangi o'yinchi qo'shiladi
     const delay = 800 + Math.random() * 2000;
     const timer = setTimeout(() => {
       const newPlayer = generateFakePlayer(players.length + 1);
@@ -66,184 +61,128 @@ export default function GameMatchmaking({ onReady, onCancel }: GameMatchmakingPr
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '100vh',
-        background: 'var(--bg-primary)',
+        height: '100dvh',
         padding: '20px',
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {/* Fon dekoratsiya */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px',
-          height: '300px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,0,110,0.08) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }}
-      />
+      {/* ====== FON RASMI — GameScreen dagidek ====== */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        backgroundImage: 'url(/assets/game-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1,
+        background: 'rgba(0,0,0,0.5)',
+        pointerEvents: 'none',
+      }} />
 
-      {/* Animatsiya ikonka */}
-      <div
-        style={{
-          fontSize: '64px',
-          marginBottom: '20px',
+      {/* Kontent */}
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '320px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+        {/* Animatsiya ikonka */}
+        <div style={{
+          fontSize: '64px', marginBottom: '20px',
           animation: 'pulse 1.5s ease infinite',
-        }}
-      >
-        🎮
-      </div>
+        }}>
+          🎮
+        </div>
 
-      {/* Sarlavha */}
-      <div
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '20px',
-          fontWeight: 700,
-          color: '#fff',
-          marginBottom: '6px',
-        }}
-      >
-        O'YINCHI QIDIRILMOQDA
-      </div>
+        <div style={{
+          fontFamily: 'var(--font-display)', fontSize: '20px',
+          fontWeight: 700, color: '#fff', marginBottom: '6px',
+          textShadow: '0 2px 8px rgba(0,0,0,0.6)',
+        }}>
+          O'YINCHI QIDIRILMOQDA
+        </div>
 
-      <div
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '14px',
-          color: 'rgba(255,255,255,0.4)',
-          marginBottom: '28px',
-        }}
-      >
-        {players.length}/{TOTAL_PLAYERS} o'yinchi topildi{dots}
-      </div>
+        <div style={{
+          fontFamily: 'var(--font-body)', fontSize: '14px',
+          color: 'rgba(255,255,255,0.5)', marginBottom: '28px',
+          textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+        }}>
+          {players.length}/{TOTAL_PLAYERS} o'yinchi topildi{dots}
+        </div>
 
-      {/* Progress bar */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '300px',
-          height: '8px',
-          borderRadius: '4px',
-          background: 'rgba(255,255,255,0.06)',
-          overflow: 'hidden',
-          marginBottom: '24px',
-        }}
-      >
-        <div
-          style={{
-            width: `${progress}%`,
-            height: '100%',
-            borderRadius: '4px',
+        {/* Progress bar */}
+        <div style={{
+          width: '100%', height: '8px', borderRadius: '4px',
+          background: 'rgba(0,0,0,0.4)', overflow: 'hidden', marginBottom: '24px',
+          backdropFilter: 'blur(4px)',
+        }}>
+          <div style={{
+            width: `${progress}%`, height: '100%', borderRadius: '4px',
             background: 'linear-gradient(90deg, #ff006e, #ff4757)',
             transition: 'width 0.4s ease',
             boxShadow: '0 0 12px rgba(255,0,110,0.4)',
-          }}
-        />
-      </div>
+          }} />
+        </div>
 
-      {/* O'yinchilar ro'yxati */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '300px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '6px',
-          marginBottom: '30px',
-        }}
-      >
-        {Array.from({ length: TOTAL_PLAYERS }).map((_, i) => {
-          const player = players[i];
-          return (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 14px',
-                borderRadius: '10px',
-                background: player
-                  ? 'rgba(255,255,255,0.04)'
-                  : 'rgba(255,255,255,0.015)',
-                border: `1px solid ${
-                  player ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)'
-                }`,
-                transition: 'all 0.3s ease',
-              }}
-            >
-              {/* Avatar */}
+        {/* O'yinchilar ro'yxati */}
+        <div style={{
+          width: '100%', display: 'flex', flexDirection: 'column',
+          gap: '6px', marginBottom: '30px',
+        }}>
+          {Array.from({ length: TOTAL_PLAYERS }).map((_, i) => {
+            const player = players[i];
+            return (
               <div
+                key={i}
                 style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  background: player
-                    ? 'rgba(255,0,110,0.1)'
-                    : 'rgba(255,255,255,0.03)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '10px 14px', borderRadius: '10px',
+                  background: player ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)',
+                  backdropFilter: 'blur(6px)',
+                  border: `1px solid ${player ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`,
+                  transition: 'all 0.3s ease',
                 }}
               >
-                {player ? player.avatar : '?'}
-              </div>
-
-              {/* Ism */}
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: player ? '#fff' : 'rgba(255,255,255,0.15)',
-                  }}
-                >
-                  {player ? player.name : 'Kutilmoqda...'}
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '50%',
+                  background: player ? 'rgba(255,0,110,0.15)' : 'rgba(0,0,0,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '16px',
+                }}>
+                  {player ? player.avatar : '?'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontFamily: 'var(--font-display)', fontSize: '13px',
+                    fontWeight: 600, color: player ? '#fff' : 'rgba(255,255,255,0.15)',
+                  }}>
+                    {player ? player.name : 'Kutilmoqda...'}
+                  </div>
+                </div>
+                <div style={{
+                  fontFamily: 'var(--font-display)', fontSize: '10px',
+                  fontWeight: 700, color: player ? '#2ed573' : 'rgba(255,255,255,0.1)',
+                }}>
+                  {player ? '✓' : `${i + 1}`}
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              {/* Holat */}
-              <div
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  color: player ? '#2ed573' : 'rgba(255,255,255,0.1)',
-                }}
-              >
-                {player ? '✓' : `${i + 1}`}
-              </div>
-            </div>
-          );
-        })}
+        {/* Bekor qilish */}
+        <button
+          onClick={() => { hapticImpact('medium'); onCancel(); }}
+          style={{
+            padding: '10px 24px', borderRadius: '10px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(6px)',
+            fontFamily: 'var(--font-body)', fontSize: '13px',
+            color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+          }}
+        >
+          Bekor qilish
+        </button>
       </div>
-
-      {/* Bekor qilish */}
-      <button
-        onClick={() => {
-          hapticImpact('medium');
-          onCancel();
-        }}
-        style={{
-          padding: '10px 24px',
-          borderRadius: '10px',
-          border: '1px solid rgba(255,255,255,0.1)',
-          background: 'transparent',
-          fontFamily: 'var(--font-body)',
-          fontSize: '13px',
-          color: 'rgba(255,255,255,0.4)',
-          cursor: 'pointer',
-        }}
-      >
-        Bekor qilish
-      </button>
 
       <style>{`
         @keyframes pulse {
