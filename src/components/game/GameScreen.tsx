@@ -81,14 +81,16 @@ const PLAYERS_INIT: Player[] = [
 
 const TOTAL_ROUNDS = 5;
 
-// 6 ta raqib uchun stul pozitsiyalari — stol atrofida simmetrik
+// ================================================================
+// TZ: stul pozitsiyalari — fon rasmdagi stullarga mos
+// ================================================================
 const SEAT_POSITIONS = [
-  { top: '3%', left: '50%', transform: 'translateX(-50%)' },      // 1 — yuqori markaz
-  { top: '22%', left: '4%' },                                      // 2 — chap yuqori
-  { top: '22%', right: '4%' },                                     // 3 — o'ng yuqori
-  { top: '58%', left: '4%' },                                      // 4 — chap past
-  { top: '58%', right: '4%' },                                     // 5 — o'ng past
-  { top: '78%', left: '50%', transform: 'translateX(-50%)' },      // 6 — past markaz
+  { top: '34%', left: '50%', transform: 'translate(-50%, -50%)' },
+  { top: '39%', left: '70%', transform: 'translate(-50%, -50%)' },
+  { top: '52%', left: '83%', transform: 'translate(-50%, -50%)' },
+  { top: '73%', left: '71%', transform: 'translate(-50%, -50%)' },
+  { top: '73%', left: '29%', transform: 'translate(-50%, -50%)' },
+  { top: '52%', left: '17%', transform: 'translate(-50%, -50%)' },
 ];
 
 // ================================================================
@@ -230,7 +232,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
       background: '#050508',
     }}>
 
-      {/* ====== GLOBAL CYBERPUNK STYLES ====== */}
+      {/* ====== ANIMATSIYALAR ====== */}
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(12px); }
@@ -244,24 +246,11 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
         }
-        @keyframes ringGlow {
-          0%, 100% { opacity: 0.15; }
-          50% { opacity: 0.35; }
-        }
-        @keyframes scanline {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100%); }
-        }
-        @keyframes cardFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-        }
       `}</style>
 
-      {/* ====== HEADER — LED EKRAN EFFEKTIDA ====== */}
+      {/* ====== HEADER ====== */}
       <div style={{
-        position: 'relative', zIndex: 20,
-        flexShrink: 0,
+        position: 'relative', zIndex: 20, flexShrink: 0,
         padding: '8px 12px',
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
         minHeight: '48px',
@@ -281,17 +270,12 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           }}
         >←</button>
 
-        {/* Logo / Round info — LED ekran uslubida */}
         <div style={{
-          textAlign: 'center',
-          padding: '2px 16px',
+          textAlign: 'center', padding: '2px 16px',
           background: 'rgba(0,0,0,0.4)',
           border: '1px solid rgba(77,163,255,0.2)',
-          borderRadius: '4px',
-          position: 'relative',
-          overflow: 'hidden',
+          borderRadius: '4px', position: 'relative', overflow: 'hidden',
         }}>
-          {/* Scanline effekti */}
           <div style={{
             position: 'absolute', inset: 0,
             background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(77,163,255,0.03) 2px, rgba(77,163,255,0.03) 4px)',
@@ -299,16 +283,14 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           }} />
           <div style={{
             fontFamily: 'var(--font-display)', fontSize: '13px',
-            fontWeight: 700, color: '#4DA3FF',
-            letterSpacing: '3px',
+            fontWeight: 700, color: '#4DA3FF', letterSpacing: '3px',
             textShadow: '0 0 10px rgba(77,163,255,0.5)',
           }}>
             ROUND {round}/{TOTAL_ROUNDS}
           </div>
           <div style={{
             fontFamily: 'var(--font-body)', fontSize: '7px',
-            color: 'rgba(166,77,255,0.6)', marginTop: '1px',
-            letterSpacing: '1px',
+            color: 'rgba(166,77,255,0.6)', marginTop: '1px', letterSpacing: '1px',
           }}>
             {phase === 'waiting' ? 'INITIALIZING...' :
              phase === 'showQuestion' ? 'DECRYPTING...' :
@@ -317,7 +299,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         </div>
 
-        {/* Taymer — neon halqa */}
         <div style={{
           width: '32px', height: '32px', borderRadius: '50%',
           background: phase === 'playing'
@@ -335,7 +316,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
       </div>
 
       {/* ================================================================
-          SCENE — CYBERPUNK O'YIN XONASI
+          SCENE
           ================================================================ */}
       <div style={{
         position: 'relative', zIndex: 10, flex: 1,
@@ -343,7 +324,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         overflow: 'hidden', minHeight: 0,
       }}>
 
-        {/* ======== COUNTDOWN ======== */}
+        {/* ======== COUNTDOWN — O'ZGARMAYDI ======== */}
         {phase === 'waiting' && (
           <div style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -372,7 +353,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* ======== SHOW QUESTION ======== */}
+        {/* ======== SHOW QUESTION — O'ZGARMAYDI ======== */}
         {phase === 'showQuestion' && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'fadeUp 0.4s ease' }}>
@@ -402,7 +383,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         )}
 
         {/* ============================================================
-            PLAYING — TO'LIQ CYBERPUNK STOL XONASI
+            PLAYING — FAQAT SHU QISM O'ZGARADI (TZ ASOSIDA)
             ============================================================ */}
         {phase === 'playing' && (
           <div style={{
@@ -410,165 +391,43 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             minHeight: 0, overflow: 'hidden',
           }}>
 
-            {/* ====== ASOSIY SCENE ====== */}
+            {/* ====== ASOSIY SCENE — FON RASMI BILAN ====== */}
             <div style={{
-              flex: 1, position: 'relative', minHeight: 0,
-              background: 'radial-gradient(ellipse at 50% 40%, rgba(166,77,255,0.06) 0%, rgba(5,5,8,1) 70%)',
-              overflow: 'hidden',
+              flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden',
+              backgroundImage: 'url(/assets/game-room.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
             }}>
 
-              {/* ---- CHAP REKLAMA PANEL ---- */}
-              <div style={{
-                position: 'absolute', left: '0', top: '10%', bottom: '20%',
-                width: '28px', zIndex: 3,
-                background: 'linear-gradient(180deg, rgba(166,77,255,0.08), rgba(77,163,255,0.08))',
-                borderRight: '1px solid rgba(166,77,255,0.2)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', gap: '8px',
-              }}>
-                <div style={{ fontSize: '10px', opacity: 0.4, writingMode: 'vertical-lr', letterSpacing: '2px', fontFamily: 'var(--font-display)', color: 'rgba(166,77,255,0.5)', fontSize: '6px' }}>
-                  PARTY
-                </div>
-                <div style={{ width: '14px', height: '14px', borderRadius: '3px', background: 'rgba(166,77,255,0.15)', border: '1px solid rgba(166,77,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px' }}>🃏</div>
-                <div style={{ fontSize: '10px', opacity: 0.4, writingMode: 'vertical-lr', letterSpacing: '2px', fontFamily: 'var(--font-display)', color: 'rgba(77,163,255,0.5)', fontSize: '6px' }}>
-                  MEME
-                </div>
-              </div>
-
-              {/* ---- O'NG REKLAMA PANEL ---- */}
-              <div style={{
-                position: 'absolute', right: '0', top: '10%', bottom: '20%',
-                width: '28px', zIndex: 3,
-                background: 'linear-gradient(180deg, rgba(77,163,255,0.08), rgba(166,77,255,0.08))',
-                borderLeft: '1px solid rgba(77,163,255,0.2)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', gap: '8px',
-              }}>
-                <div style={{ fontSize: '10px', opacity: 0.4, writingMode: 'vertical-lr', letterSpacing: '2px', fontFamily: 'var(--font-display)', color: 'rgba(77,163,255,0.5)', fontSize: '6px' }}>
-                  AD
-                </div>
-                <div style={{ width: '14px', height: '14px', borderRadius: '3px', background: 'rgba(77,163,255,0.15)', border: '1px solid rgba(77,163,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px' }}>⭐</div>
-                <div style={{ fontSize: '10px', opacity: 0.4, writingMode: 'vertical-lr', letterSpacing: '2px', fontFamily: 'var(--font-display)', color: 'rgba(166,77,255,0.5)', fontSize: '6px' }}>
-                  SPACE
-                </div>
-              </div>
-
-              {/* ---- POL KONSENTRIK HALQALARI ---- */}
-              {[1, 0.75, 0.5].map((scale, i) => (
-                <div key={i} style={{
-                  position: 'absolute',
-                  top: '50%', left: '50%',
-                  width: `${scale * 85}%`, height: `${scale * 60}%`,
-                  transform: 'translate(-50%, -50%)',
-                  borderRadius: '50%',
-                  border: `1px solid rgba(${i === 0 ? '77,163,255' : '166,77,255'},${0.08 + i * 0.04})`,
-                  animation: `ringGlow ${3 + i}s ease infinite`,
-                  animationDelay: `${i * 0.5}s`,
-                  pointerEvents: 'none', zIndex: 1,
-                }} />
-              ))}
-
-              {/* ---- CHIROQ HALQASI — stol ustida ---- */}
-              <div style={{
-                position: 'absolute',
-                top: '30%', left: '50%',
-                width: '50%', height: '35%',
-                transform: 'translate(-50%, -50%)',
-                borderRadius: '50%',
-                border: '2px solid rgba(166,77,255,0.15)',
-                boxShadow: '0 0 40px rgba(166,77,255,0.08), inset 0 0 30px rgba(77,163,255,0.04)',
-                pointerEvents: 'none', zIndex: 2,
-              }} />
-
               {/* ======================================================
-                  STOL — markaziy, katta, dumaloq
+                  QIZIL SAVOL KARTASI — stol ustida, TZ pozitsiyasi
                   ====================================================== */}
               <div style={{
                 position: 'absolute',
-                top: '50%', left: '50%',
-                width: '65%', maxWidth: '280px',
-                height: '40%', maxHeight: '200px',
+                top: '58%', left: '50%',
                 transform: 'translate(-50%, -50%)',
-                borderRadius: '50%',
-                background: `
-                  radial-gradient(ellipse at center, rgba(15,15,25,0.95) 0%, rgba(10,10,18,0.98) 100%)
-                `,
-                border: '2px solid rgba(166,77,255,0.3)',
-                boxShadow: `
-                  0 0 30px rgba(166,77,255,0.15),
-                  0 0 60px rgba(77,163,255,0.08),
-                  inset 0 0 40px rgba(0,0,0,0.5)
-                `,
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                zIndex: 5, gap: '6px',
-                animation: 'neonPulse 4s ease infinite',
+                zIndex: 20,
+                width: '70px', height: '95px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #ff006e, #cc0044)',
+                border: '2px solid rgba(166,77,255,0.4)',
+                boxShadow: '0 0 20px rgba(255,0,110,0.25), 0 4px 16px rgba(0,0,0,0.4)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '8px 6px',
               }}>
-                {/* Stol ichki halqasi */}
                 <div style={{
-                  position: 'absolute', inset: '8px',
-                  borderRadius: '50%',
-                  border: '1px solid rgba(77,163,255,0.12)',
-                  pointerEvents: 'none',
-                }} />
-
-                {/* QIZIL KARTALAR — stol USTIDA, yopiq */}
-                <div style={{
-                  display: 'flex', gap: '3px', justifyContent: 'center',
-                  zIndex: 6,
+                  fontFamily: 'var(--font-display)', fontSize: '10px',
+                  fontWeight: 700, color: '#fff', lineHeight: 1.3,
+                  textAlign: 'center',
+                  textShadow: '0 1px 4px rgba(0,0,0,0.5)',
                 }}>
-                  {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => {
-                    const isRevealed = i + 1 < round;
-                    const isCurrent = i + 1 === round;
-                    return (
-                      <div key={i} style={{
-                        width: '26px', height: '36px', borderRadius: '4px',
-                        background: isRevealed
-                          ? 'rgba(46,213,115,0.15)'
-                          : isCurrent
-                            ? 'linear-gradient(135deg, #ff006e, #A64DFF)'
-                            : 'linear-gradient(135deg, #cc0033, #880022)',
-                        border: isCurrent
-                          ? '2px solid #A64DFF'
-                          : isRevealed
-                            ? '1px solid rgba(46,213,115,0.3)'
-                            : '1px solid rgba(166,77,255,0.15)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: isRevealed ? '10px' : '7px',
-                        color: isRevealed ? '#2ed573' : 'rgba(166,77,255,0.6)',
-                        fontFamily: 'var(--font-display)', fontWeight: 700,
-                        boxShadow: isCurrent
-                          ? '0 0 10px rgba(166,77,255,0.4), 0 0 20px rgba(166,77,255,0.15)'
-                          : 'none',
-                        transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
-                        transition: 'all 0.3s ease',
-                      }}>
-                        {isRevealed ? '✓' : i + 1}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* SAVOL — stol markazida */}
-                <div style={{
-                  padding: '4px 8px', borderRadius: '6px',
-                  background: 'rgba(0,0,0,0.4)',
-                  border: '1px solid rgba(166,77,255,0.15)',
-                  maxWidth: '170px', textAlign: 'center',
-                  zIndex: 6,
-                }}>
-                  <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '8px',
-                    fontWeight: 700, color: '#A64DFF', lineHeight: 1.3,
-                    textShadow: '0 0 6px rgba(166,77,255,0.3)',
-                  }}>
-                    🔴 {currentRed.text}
-                  </div>
+                  {currentRed.text}
                 </div>
               </div>
 
               {/* ======================================================
-                  O'YINCHILAR — stullarda, stol ATROFIDA
+                  O'YINCHILAR — stullarda, TZ pozitsiyalari
                   ====================================================== */}
               {others.map((player, i) => {
                 const pos = SEAT_POSITIONS[i];
@@ -579,38 +438,39 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                     position: 'absolute',
                     ...pos,
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    zIndex: 8, gap: '1px',
+                    zIndex: 15, gap: '2px',
                   }}>
-                    {/* Stul + Avatar */}
+                    {/* Avatar — 54px, emoji 24px */}
                     <div style={{
                       position: 'relative',
-                      width: '36px', height: '36px', borderRadius: '50%',
+                      width: '54px', height: '54px', borderRadius: '50%',
                       background: 'rgba(10,10,20,0.85)',
                       border: player.score > 0
-                        ? '2px solid #ffd700'
-                        : '1.5px solid rgba(166,77,255,0.3)',
+                        ? '2.5px solid #ffd700'
+                        : '2px solid rgba(166,77,255,0.3)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '16px',
+                      fontSize: '24px',
                       boxShadow: player.score > 0
-                        ? '0 0 10px rgba(255,215,0,0.25), 0 0 20px rgba(255,215,0,0.1)'
-                        : '0 0 12px rgba(166,77,255,0.1), 0 2px 8px rgba(0,0,0,0.4)',
+                        ? '0 0 12px rgba(255,215,0,0.3), 0 0 24px rgba(255,215,0,0.1)'
+                        : '0 0 15px rgba(166,77,255,0.12), 0 2px 10px rgba(0,0,0,0.5)',
                     }}>
                       {player.avatar}
+                      {/* Online dot */}
                       <div style={{
                         position: 'absolute', bottom: '-1px', right: '-1px',
-                        width: '7px', height: '7px', borderRadius: '50%',
+                        width: '9px', height: '9px', borderRadius: '50%',
                         background: '#2ed573',
                         border: '2px solid rgba(5,5,8,0.9)',
                       }} />
-                      {/* Kichik kartalar */}
+                      {/* Kichik kartalar — qo'lda */}
                       <div style={{
-                        position: 'absolute', bottom: '-5px', left: '50%',
+                        position: 'absolute', bottom: '-6px', left: '50%',
                         transform: 'translateX(-50%)',
-                        display: 'flex', gap: '1px',
+                        display: 'flex', gap: '1.5px',
                       }}>
                         {Array.from({ length: Math.min(3, player.cards) }).map((_, j) => (
                           <div key={j} style={{
-                            width: '4px', height: '7px', borderRadius: '1px',
+                            width: '5px', height: '8px', borderRadius: '1px',
                             background: 'linear-gradient(135deg, #3742fa, #4DA3FF)',
                             border: '0.5px solid rgba(77,163,255,0.3)',
                           }} />
@@ -620,11 +480,12 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
                     {/* Ism */}
                     <div style={{
-                      fontFamily: 'var(--font-body)', fontSize: '7px',
-                      color: 'rgba(255,255,255,0.55)',
-                      maxWidth: '48px', overflow: 'hidden',
+                      fontFamily: 'var(--font-body)', fontSize: '8px',
+                      color: 'rgba(255,255,255,0.6)',
+                      maxWidth: '55px', overflow: 'hidden',
                       textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center',
-                      marginTop: '5px',
+                      marginTop: '6px',
+                      textShadow: '0 1px 4px rgba(0,0,0,0.8)',
                     }}>
                       {player.name}
                     </div>
@@ -632,7 +493,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                     {/* Score */}
                     {player.score > 0 && (
                       <div style={{
-                        fontFamily: 'var(--font-display)', fontSize: '7px',
+                        fontFamily: 'var(--font-display)', fontSize: '8px',
                         fontWeight: 700, color: '#ffd700',
                         textShadow: '0 0 6px rgba(255,215,0,0.3)',
                       }}>
@@ -642,47 +503,10 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                   </div>
                 );
               })}
-
-              {/* ---- JAVONLAR — chap past (trophy) ---- */}
-              <div style={{
-                position: 'absolute', bottom: '8%', left: '10%',
-                display: 'flex', gap: '3px', zIndex: 3,
-              }}>
-                {['🏆', '🎮', '🎯'].map((icon, i) => (
-                  <div key={i} style={{
-                    width: '18px', height: '18px', borderRadius: '4px',
-                    background: 'rgba(10,10,20,0.8)',
-                    border: '1px solid rgba(166,77,255,0.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '8px', opacity: 0.4,
-                  }}>
-                    {icon}
-                  </div>
-                ))}
-              </div>
-
-              {/* ---- JAVONLAR — o'ng past (emoji) ---- */}
-              <div style={{
-                position: 'absolute', bottom: '8%', right: '10%',
-                display: 'flex', gap: '3px', zIndex: 3,
-              }}>
-                {['😎', '🦊', '👻'].map((icon, i) => (
-                  <div key={i} style={{
-                    width: '18px', height: '18px', borderRadius: '4px',
-                    background: 'rgba(10,10,20,0.8)',
-                    border: '1px solid rgba(77,163,255,0.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '8px', opacity: 0.4,
-                  }}>
-                    {icon}
-                  </div>
-                ))}
-              </div>
-
             </div>
 
             {/* ======================================================
-                PASTKI QISM — 7 TA KARTA (SCROLL YO'Q)
+                PASTKI QISM — 7 TA KARTA (O'ZGARMAYDI)
                 ====================================================== */}
             <div style={{
               flexShrink: 0, width: '100%',
@@ -691,7 +515,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               background: 'linear-gradient(0deg, rgba(5,5,8,0.98) 0%, rgba(5,5,8,0.9) 70%, rgba(5,5,8,0.6) 100%)',
               borderTop: '1px solid rgba(166,77,255,0.12)',
             }}>
-              {/* Sarlavha */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 marginBottom: '4px', padding: '0 2px',
@@ -711,7 +534,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 </span>
               </div>
 
-              {/* 7 ta karta */}
               <div style={{
                 display: 'flex', gap: '4px',
                 justifyContent: 'center', width: '100%',
@@ -781,7 +603,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* ======== VOTING ======== */}
+        {/* ======== VOTING — O'ZGARMAYDI ======== */}
         {phase === 'voting' && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
@@ -850,7 +672,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* ======== RESULT ======== */}
+        {/* ======== RESULT — O'ZGARMAYDI ======== */}
         {phase === 'result' && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
