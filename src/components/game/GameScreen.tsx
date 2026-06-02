@@ -410,10 +410,10 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 border: '2px solid rgba(166,77,255,0.4)',
                 boxShadow: '0 0 20px rgba(255,0,110,0.25), 0 4px 16px rgba(0,0,0,0.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '8px 6px',
+                padding: '5px 3px',
               }}>
                 <div style={{
-                  fontFamily: 'var(--font-display)', fontSize: '10px',
+                  fontFamily: 'var(--font-display)', fontSize: '7px',
                   fontWeight: 700, color: '#fff', lineHeight: 1.3,
                   textAlign: 'center',
                   textShadow: '0 1px 4px rgba(0,0,0,0.5)',
