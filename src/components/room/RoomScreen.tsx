@@ -4,7 +4,6 @@ import { hapticImpact, hapticSuccess, hapticSelection } from '@/config/telegram'
 import { useToast } from '@/components/common/Toast';
 import RoomChat from '@/components/common/RoomChat';
 
-
 interface RoomScreenProps {
   onNavigate: (tab: string) => void;
   initialMode?: 'create' | 'join';
@@ -97,16 +96,18 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
           height: '100dvh',
           position: 'relative',
           overflow: 'hidden',
+        }}
+      >
+        {/* ====== FON RASMI — GameScreen dagidek ====== */}
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 0,
           backgroundImage: 'url(/assets/game-bg.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-        }}
-      >
-        {/* Qoraytirish — butun ekran */}
+        }} />
         <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
+          position: 'fixed', inset: 0, zIndex: 1,
           background: 'rgba(0,0,0,0.5)',
           pointerEvents: 'none',
         }} />
@@ -199,16 +200,18 @@ export default function RoomScreen({ onNavigate, initialMode = 'create', onStart
         height: '100dvh',
         position: 'relative',
         overflow: 'hidden',
+      }}
+    >
+      {/* ====== FON RASMI — GameScreen dagidek ====== */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0,
         backgroundImage: 'url(/assets/game-bg.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-      }}
-    >
-      {/* Qoraytirish — butun ekran */}
+      }} />
       <div style={{
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
+        position: 'fixed', inset: 0, zIndex: 1,
         background: 'rgba(0,0,0,0.5)',
         pointerEvents: 'none',
       }} />
