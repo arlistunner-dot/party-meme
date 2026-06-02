@@ -81,9 +81,6 @@ const PLAYERS_INIT: Player[] = [
 
 const TOTAL_ROUNDS = 5;
 
-// ================================================================
-// TZ: stul pozitsiyalari — fon rasmdagi stullarga mos
-// ================================================================
 const SEAT_POSITIONS = [
   { top: '34%', left: '50%', transform: 'translate(-50%, -50%)' },
   { top: '39%', left: '70%', transform: 'translate(-50%, -50%)' },
@@ -124,7 +121,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   const [opponentPlays, setOpponentPlays] = useState<Card[]>([]);
   const [winner, setWinner] = useState<Player | null>(null);
 
-  // ====== START ======
   const startRound = useCallback(() => {
     const available = RED_CARDS.filter((c) => !usedRedIds.has(c.id as number));
     const pool = available.length > 0 ? available : RED_CARDS;
@@ -151,7 +147,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
   useEffect(() => { startRound(); }, []);
 
-  // ====== COUNTDOWN ======
   useEffect(() => {
     if (phase !== 'waiting') return;
     if (countdown <= 0) { setPhase('showQuestion'); return; }
@@ -159,14 +154,12 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     return () => clearTimeout(t);
   }, [countdown, phase]);
 
-  // ====== SHOW QUESTION ======
   useEffect(() => {
     if (phase !== 'showQuestion') return;
     const t = setTimeout(() => setPhase('playing'), 1500);
     return () => clearTimeout(t);
   }, [phase]);
 
-  // ====== TIMER ======
   useEffect(() => {
     if (phase !== 'playing') return;
     if (roundTimer <= 0) {
@@ -179,7 +172,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     return () => clearInterval(t);
   }, [roundTimer, phase]);
 
-  // ====== SELECT ======
   const handleSelectBlue = (id: number | string) => {
     if (phase !== 'playing') return;
     hapticImpact('medium');
@@ -192,7 +184,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     }, 1200);
   };
 
-  // ====== VOTING ======
   useEffect(() => {
     if (phase !== 'voting') return;
     const t = setTimeout(() => {
@@ -206,7 +197,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     return () => clearTimeout(t);
   }, [phase]);
 
-  // ====== NEXT ======
   const handleNextRound = () => {
     hapticImpact('medium');
     if (round >= TOTAL_ROUNDS) { onGameEnd(); return; }
@@ -214,7 +204,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
     startRound();
   };
 
-  // ====== HELPERS ======
   const timerColor = roundTimer <= 10 ? '#ff4757' : roundTimer <= 20 ? '#ffa502' : '#2ed573';
   const selectedCardText = [...playerCards, ...opponentPlays, ...BLUE_CARDS_POOL]
     .find((c) => c.id === selectedBlue)?.text || '';
@@ -229,10 +218,27 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
       display: 'flex', flexDirection: 'column',
       height: '100dvh', width: '100%',
       position: 'relative', overflow: 'hidden',
-      background: '#050508',
     }}>
 
-      {/* ====== ANIMATSIYALAR ====== */}
+      {/* ==============================================================
+          FON RASMI — BUTUN EKRAN, HAR DOIM KO'RINADI
+          ============================================================== */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        backgroundImage: 'url(/assets/game-room.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+
+      {/* Yengil qoraytirish — matn o'qilishi uchun */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1,
+        background: 'rgba(0,0,0,0.25)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* ANIMATSIYALAR */}
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(12px); }
@@ -242,10 +248,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.06); }
         }
-        @keyframes neonPulse {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
       `}</style>
 
       {/* ====== HEADER ====== */}
@@ -254,7 +256,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         padding: '8px 12px',
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
         minHeight: '48px',
-        background: 'linear-gradient(180deg, rgba(10,10,20,0.95) 0%, rgba(10,10,20,0.85) 100%)',
+        background: 'rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(166,77,255,0.3)',
         boxShadow: '0 2px 20px rgba(166,77,255,0.15)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -274,13 +277,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           textAlign: 'center', padding: '2px 16px',
           background: 'rgba(0,0,0,0.4)',
           border: '1px solid rgba(77,163,255,0.2)',
-          borderRadius: '4px', position: 'relative', overflow: 'hidden',
+          borderRadius: '4px',
         }}>
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(77,163,255,0.03) 2px, rgba(77,163,255,0.03) 4px)',
-            pointerEvents: 'none',
-          }} />
           <div style={{
             fontFamily: 'var(--font-display)', fontSize: '13px',
             fontWeight: 700, color: '#4DA3FF', letterSpacing: '3px',
@@ -316,7 +314,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
       </div>
 
       {/* ================================================================
-          SCENE
+          SCENE — FON RASMI USTIDA
           ================================================================ */}
       <div style={{
         position: 'relative', zIndex: 10, flex: 1,
@@ -324,28 +322,29 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         overflow: 'hidden', minHeight: 0,
       }}>
 
-        {/* ======== COUNTDOWN — O'ZGARMAYDI ======== */}
+        {/* ======== COUNTDOWN ======== */}
         {phase === 'waiting' && (
           <div style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'radial-gradient(ellipse at center, rgba(166,77,255,0.08) 0%, transparent 60%)',
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'fadeUp 0.3s ease' }}>
               <div style={{
                 width: '70px', height: '70px', borderRadius: '50%',
-                background: 'rgba(5,5,8,0.8)',
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(10px)',
                 border: '2px solid rgba(166,77,255,0.5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'var(--font-display)', fontSize: '32px',
                 fontWeight: 700, color: '#A64DFF',
                 animation: 'pulse 0.8s infinite',
-                boxShadow: '0 0 30px rgba(166,77,255,0.25), inset 0 0 20px rgba(166,77,255,0.1)',
+                boxShadow: '0 0 30px rgba(166,77,255,0.25)',
               }}>
                 {countdown > 0 ? countdown : '🎯'}
               </div>
               <div style={{
                 marginTop: '10px', fontFamily: 'var(--font-display)',
-                fontSize: '11px', color: 'rgba(166,77,255,0.5)', letterSpacing: '3px',
+                fontSize: '11px', color: 'rgba(166,77,255,0.6)', letterSpacing: '3px',
+                textShadow: '0 2px 8px rgba(0,0,0,0.8)',
               }}>
                 ROUND {round}
               </div>
@@ -353,16 +352,17 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* ======== SHOW QUESTION — O'ZGARMAYDI ======== */}
+        {/* ======== SHOW QUESTION ======== */}
         {phase === 'showQuestion' && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'fadeUp 0.4s ease' }}>
               <div style={{
                 padding: '16px 20px', borderRadius: '12px',
-                background: 'rgba(5,5,8,0.85)',
+                background: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(12px)',
                 border: '1px solid rgba(166,77,255,0.35)',
                 maxWidth: '300px', textAlign: 'center',
-                boxShadow: '0 0 40px rgba(166,77,255,0.15), 0 0 80px rgba(77,163,255,0.05)',
+                boxShadow: '0 0 40px rgba(166,77,255,0.15)',
               }}>
                 <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔴</div>
                 <div style={{
@@ -374,7 +374,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               </div>
               <div style={{
                 marginTop: '10px', fontFamily: 'var(--font-display)',
-                fontSize: '9px', color: 'rgba(77,163,255,0.4)', letterSpacing: '2px',
+                fontSize: '9px', color: 'rgba(77,163,255,0.5)', letterSpacing: '2px',
+                textShadow: '0 2px 6px rgba(0,0,0,0.8)',
               }}>
                 SELECT YOUR CARD
               </div>
@@ -383,26 +384,21 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         )}
 
         {/* ============================================================
-            PLAYING — FAQAT SHU QISM O'ZGARADI (TZ ASOSIDA)
+            PLAYING — FON RASMI USTIDA, O'YINCHILAR STULLARDA
             ============================================================ */}
         {phase === 'playing' && (
           <div style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
+            flex: 1, position: 'relative',
+            display: 'flex', flexDirection: 'column',
             minHeight: 0, overflow: 'hidden',
           }}>
 
-            {/* ====== ASOSIY SCENE — FON RASMI BILAN ====== */}
+            {/* ====== SCENE — fon rasm allaqachon ko'rinadi ====== */}
             <div style={{
-              flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden',
-              backgroundImage: 'url(/assets/game-room.png)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
+              flex: 1, position: 'relative', minHeight: 0,
             }}>
 
-              {/* ======================================================
-                  QIZIL SAVOL KARTASI — stol ustida, TZ pozitsiyasi
-                  ====================================================== */}
+              {/* QIZIL SAVOL KARTASI — stol ustida */}
               <div style={{
                 position: 'absolute',
                 top: '58%', left: '50%',
@@ -426,9 +422,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 </div>
               </div>
 
-              {/* ======================================================
-                  O'YINCHILAR — stullarda, TZ pozitsiyalari
-                  ====================================================== */}
+              {/* O'YINCHILAR — stullarda */}
               {others.map((player, i) => {
                 const pos = SEAT_POSITIONS[i];
                 if (!pos) return null;
@@ -444,25 +438,24 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                     <div style={{
                       position: 'relative',
                       width: '54px', height: '54px', borderRadius: '50%',
-                      background: 'rgba(10,10,20,0.85)',
+                      background: 'rgba(0,0,0,0.6)',
+                      backdropFilter: 'blur(6px)',
                       border: player.score > 0
                         ? '2.5px solid #ffd700'
                         : '2px solid rgba(166,77,255,0.3)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '24px',
                       boxShadow: player.score > 0
-                        ? '0 0 12px rgba(255,215,0,0.3), 0 0 24px rgba(255,215,0,0.1)'
+                        ? '0 0 12px rgba(255,215,0,0.3)'
                         : '0 0 15px rgba(166,77,255,0.12), 0 2px 10px rgba(0,0,0,0.5)',
                     }}>
                       {player.avatar}
-                      {/* Online dot */}
                       <div style={{
                         position: 'absolute', bottom: '-1px', right: '-1px',
                         width: '9px', height: '9px', borderRadius: '50%',
                         background: '#2ed573',
-                        border: '2px solid rgba(5,5,8,0.9)',
+                        border: '2px solid rgba(0,0,0,0.8)',
                       }} />
-                      {/* Kichik kartalar — qo'lda */}
                       <div style={{
                         position: 'absolute', bottom: '-6px', left: '50%',
                         transform: 'translateX(-50%)',
@@ -478,19 +471,17 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                       </div>
                     </div>
 
-                    {/* Ism */}
                     <div style={{
                       fontFamily: 'var(--font-body)', fontSize: '8px',
-                      color: 'rgba(255,255,255,0.6)',
+                      color: 'rgba(255,255,255,0.7)',
                       maxWidth: '55px', overflow: 'hidden',
                       textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center',
                       marginTop: '6px',
-                      textShadow: '0 1px 4px rgba(0,0,0,0.8)',
+                      textShadow: '0 1px 4px rgba(0,0,0,0.9)',
                     }}>
                       {player.name}
                     </div>
 
-                    {/* Score */}
                     {player.score > 0 && (
                       <div style={{
                         fontFamily: 'var(--font-display)', fontSize: '8px',
@@ -505,14 +496,12 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               })}
             </div>
 
-            {/* ======================================================
-                PASTKI QISM — 7 TA KARTA (O'ZGARMAYDI)
-                ====================================================== */}
+            {/* ====== PASTKI — 7 TA KARTA ====== */}
             <div style={{
               flexShrink: 0, width: '100%',
               padding: '6px 8px',
               paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
-              background: 'linear-gradient(0deg, rgba(5,5,8,0.98) 0%, rgba(5,5,8,0.9) 70%, rgba(5,5,8,0.6) 100%)',
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 70%, transparent 100%)',
               borderTop: '1px solid rgba(166,77,255,0.12)',
             }}>
               <div style={{
@@ -528,7 +517,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 <span style={{
                   fontFamily: 'var(--font-display)', fontSize: '8px',
                   fontWeight: 700, color: '#4DA3FF',
-                  textShadow: '0 0 6px rgba(77,163,255,0.3)',
                 }}>
                   {playerCards.length}
                 </span>
@@ -562,7 +550,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                           ? '2px solid #A64DFF'
                           : '1px solid rgba(166,77,255,0.12)',
                         boxShadow: isSel
-                          ? '0 0 20px rgba(166,77,255,0.4), 0 6px 20px rgba(0,0,0,0.4)'
+                          ? '0 0 20px rgba(166,77,255,0.4)'
                           : '0 2px 6px rgba(0,0,0,0.3)',
                         display: 'flex', flexDirection: 'column',
                         alignItems: 'center', justifyContent: 'center',
@@ -603,28 +591,28 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* ======== VOTING — O'ZGARMAYDI ======== */}
+        {/* ======== VOTING ======== */}
         {phase === 'voting' && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             padding: '10px', overflow: 'auto',
             animation: 'fadeUp 0.3s ease',
-            background: 'radial-gradient(ellipse at center, rgba(166,77,255,0.06) 0%, transparent 60%)',
           }}>
             <div style={{
               fontFamily: 'var(--font-display)', fontSize: '10px',
-              color: 'rgba(166,77,255,0.5)', letterSpacing: '2px', marginBottom: '8px',
+              color: 'rgba(166,77,255,0.6)', letterSpacing: '2px', marginBottom: '8px',
+              textShadow: '0 2px 6px rgba(0,0,0,0.8)',
             }}>
               VOTING IN PROGRESS
             </div>
 
             <div style={{
               padding: '8px 12px', borderRadius: '8px',
-              background: 'rgba(5,5,8,0.85)',
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(8px)',
               border: '1px solid rgba(166,77,255,0.25)',
               textAlign: 'center', marginBottom: '10px', maxWidth: '300px', width: '100%',
-              boxShadow: '0 0 20px rgba(166,77,255,0.08)',
             }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '10px', fontWeight: 700, color: '#A64DFF' }}>
                 🔴 {currentRed.text}
@@ -638,10 +626,10 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               {selectedBlue && (
                 <div style={{
                   padding: '8px', borderRadius: '8px',
-                  background: 'rgba(5,5,8,0.85)',
+                  background: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(8px)',
                   border: '1.5px solid rgba(166,77,255,0.4)',
                   textAlign: 'center',
-                  boxShadow: '0 0 12px rgba(166,77,255,0.15)',
                 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: '7px', color: '#A64DFF', marginBottom: '3px', letterSpacing: '1px' }}>YOU</div>
                   <div style={{ fontFamily: 'var(--font-body)', fontSize: '8px', fontWeight: 600, color: '#fff', lineHeight: 1.2 }}>
@@ -654,7 +642,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 return (
                   <div key={card.id} style={{
                     padding: '8px', borderRadius: '8px',
-                    background: 'rgba(5,5,8,0.75)',
+                    background: 'rgba(0,0,0,0.45)',
+                    backdropFilter: 'blur(6px)',
                     border: '1px solid rgba(77,163,255,0.1)',
                     textAlign: 'center',
                     animation: `fadeUp 0.3s ease ${i * 0.08}s forwards`, opacity: 0,
@@ -672,21 +661,21 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* ======== RESULT — O'ZGARMAYDI ======== */}
+        {/* ======== RESULT ======== */}
         {phase === 'result' && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             animation: 'fadeUp 0.4s ease',
-            background: 'radial-gradient(ellipse at center, rgba(166,77,255,0.06) 0%, transparent 60%)',
           }}>
             {winner && (
               <div style={{
                 padding: '14px 20px', borderRadius: '12px',
-                background: 'rgba(5,5,8,0.85)',
+                background: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(12px)',
                 border: '1.5px solid rgba(255,215,0,0.3)',
                 textAlign: 'center', marginBottom: '10px',
-                boxShadow: '0 0 30px rgba(255,215,0,0.12), 0 0 60px rgba(166,77,255,0.05)',
+                boxShadow: '0 0 30px rgba(255,215,0,0.12)',
               }}>
                 <div style={{ fontSize: '28px', marginBottom: '4px' }}>🏆</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: '15px', fontWeight: 700, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.3)' }}>
@@ -702,12 +691,13 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               {sorted.slice(0, 3).map((p, i) => (
                 <div key={p.id} style={{
                   padding: '5px 10px', borderRadius: '6px',
-                  background: 'rgba(5,5,8,0.75)',
+                  background: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(6px)',
                   border: '1px solid rgba(166,77,255,0.12)',
                   display: 'flex', alignItems: 'center', gap: '3px',
                 }}>
                   <span style={{ fontSize: '9px' }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
-                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '8px', color: 'rgba(255,255,255,0.55)' }}>{p.name}</span>
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '8px', color: 'rgba(255,255,255,0.6)' }}>{p.name}</span>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: '9px', fontWeight: 700, color: '#ffd700' }}>{p.score}</span>
                 </div>
               ))}
@@ -722,16 +712,10 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
               fontWeight: 700, color: '#fff', cursor: 'pointer',
               letterSpacing: '1px',
               boxShadow: '0 0 20px rgba(166,77,255,0.3), 0 4px 14px rgba(0,0,0,0.3)',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              transition: 'transform 0.2s ease',
             }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = 'scale(0.96)';
-              e.currentTarget.style.boxShadow = '0 0 30px rgba(166,77,255,0.5), 0 2px 8px rgba(0,0,0,0.3)';
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(166,77,255,0.3), 0 4px 14px rgba(0,0,0,0.3)';
-            }}>
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.96)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}>
               {round >= TOTAL_ROUNDS ? '🏁 FINAL RESULTS' : '▶ NEXT ROUND'}
             </button>
           </div>
