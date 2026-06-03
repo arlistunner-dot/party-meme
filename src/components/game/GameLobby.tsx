@@ -168,7 +168,7 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       </div>
 
       {/* ====== BO'SH — LOGO UCHUN (kichikroq) ====== */}
-      <div style={{ flex: 0.4 }} />
+      <div style={{ flex: 0.6 }} />
 
       {/* ====== BOSQICH 1: KARTALAR ====== */}
       {step === 'cards' && (
