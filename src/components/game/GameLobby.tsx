@@ -30,7 +30,9 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [votedTopic, setVotedTopic] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [activeTab, setActiveTab] = useState<'cards' | 'topics'>('cards');
+
+  // BOSQICH: 'cards' → 'topics'
+  const [step, setStep] = useState<'cards' | 'topics'>('cards');
 
   const [topicVotes, setTopicVotes] = useState<Record<string, number>>(() => {
     const votes: Record<string, number> = {};
@@ -56,6 +58,7 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Karta tanlash — 2 tasi tanlanganda avtomatik mavzuga o'tadi
   const toggleCard = (cardId: string) => {
     hapticImpact('light');
     if (selectedCards.includes(cardId)) {
@@ -65,10 +68,20 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
         toast('Faqat 2 ta karta!', 'error');
         return;
       }
-      setSelectedCards([...selectedCards, cardId]);
+      const newCards = [...selectedCards, cardId];
+      setSelectedCards(newCards);
+
+      // 2 ta tanlandi — avtomatik mavzuga o'tadi
+      if (newCards.length === 2) {
+        setTimeout(() => {
+          hapticSuccess();
+          setStep('topics');
+        }, 400);
+      }
     }
   };
 
+  // Mavzuga ovoz berish
   const voteTopic = (topicId: string) => {
     hapticSelection();
     if (votedTopic === topicId) return;
@@ -86,7 +99,7 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     if (!canReady) return;
     hapticSuccess();
     setIsReady(true);
-    toast('Tayyor! Boshqa o\'yinchilar kutilmoqda...', 'success');
+    toast('Tayyor! Kutilmoqda...', 'success');
   };
 
   const timerColor = timeLeft <= 10 ? '#ff4757' : timeLeft <= 20 ? '#ffa502' : '#2ed573';
@@ -111,12 +124,12 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
         pointerEvents: 'none',
       }} />
 
-      {/* ====== HEADER — KICHIK, YUQORIDA ====== */}
+      {/* ====== HEADER ====== */}
       <div style={{
         position: 'relative', zIndex: 20,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '6px 12px',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 6px)',
+        padding: '8px 12px',
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
         background: 'rgba(0,0,0,0.45)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(166,77,255,0.15)',
@@ -125,17 +138,17 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
         <button
           onClick={() => { hapticImpact('light'); onCancel(); }}
           style={{
-            width: '26px', height: '26px', borderRadius: '6px',
+            width: '28px', height: '28px', borderRadius: '6px',
             background: 'rgba(166,77,255,0.12)',
             border: '1px solid rgba(166,77,255,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: '12px', color: '#A64DFF',
+            cursor: 'pointer', fontSize: '13px', color: '#A64DFF',
           }}
         >←</button>
 
         <div style={{ textAlign: 'center' }}>
           <div style={{
-            fontFamily: 'var(--font-display)', fontSize: '11px',
+            fontFamily: 'var(--font-display)', fontSize: '12px',
             fontWeight: 700, color: '#fff', letterSpacing: '1.5px',
             textShadow: '0 0 8px rgba(166,77,255,0.4)',
           }}>
@@ -149,13 +162,12 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
           </div>
         </div>
 
-        {/* Taymer — kichik */}
         <div style={{
-          width: '30px', height: '30px', borderRadius: '50%',
+          width: '32px', height: '32px', borderRadius: '50%',
           background: `rgba(${timeLeft <= 10 ? '255,71,87' : timeLeft <= 20 ? '255,165,0' : '77,163,255'},0.1)`,
           border: `1.5px solid ${timerColor}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--font-display)', fontSize: '11px',
+          fontFamily: 'var(--font-display)', fontSize: '12px',
           fontWeight: 700, color: timerColor,
           boxShadow: `0 0 8px ${timerColor}30`,
         }}>
@@ -166,71 +178,41 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       {/* ====== BO'SH — LOGO KO'RINADI ====== */}
       <div style={{ flex: 1 }} />
 
-      {/* ====== TAB TUGMALARI ====== */}
-      <div style={{
-        position: 'relative', zIndex: 15,
-        display: 'flex', gap: '4px', padding: '0 16px',
-        marginBottom: '6px',
-      }}>
-        {[
-          { key: 'cards' as const, label: '🎴 Kartalar', count: `${selectedCards.length}/2` },
-          { key: 'topics' as const, label: '📋 Mavzu', count: votedTopic ? '✓' : '0/1' },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => { hapticSelection(); setActiveTab(tab.key); }}
-            style={{
-              flex: 1, padding: '6px 8px', borderRadius: '8px',
-              border: activeTab === tab.key
-                ? '1px solid rgba(166,77,255,0.4)'
-                : '1px solid rgba(255,255,255,0.05)',
-              background: activeTab === tab.key
-                ? 'rgba(0,0,0,0.65)'
-                : 'rgba(0,0,0,0.35)',
-              backdropFilter: 'blur(8px)',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease',
-              boxShadow: activeTab === tab.key
-                ? '0 0 10px rgba(166,77,255,0.15)'
-                : 'none',
-            }}
-          >
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: '10px',
+      {/* ====== BOSQICH 1: KARTALAR ====== */}
+      {step === 'cards' && (
+        <div style={{
+          position: 'relative', zIndex: 15,
+          padding: '0 16px', marginBottom: '10px',
+          animation: 'fadeUp 0.3s ease',
+        }}>
+          {/* Sarlavha */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '12px',
+              fontWeight: 700, color: '#fff',
+              textShadow: '0 0 8px rgba(166,77,255,0.4)',
+            }}>
+              🎴 2 TA KARTA TANLA
+            </div>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '11px',
               fontWeight: 700,
-              color: activeTab === tab.key ? '#A64DFF' : 'rgba(255,255,255,0.4)',
-              textShadow: activeTab === tab.key
-                ? '0 0 6px rgba(166,77,255,0.3)'
+              color: selectedCards.length === 2 ? '#2ed573' : 'rgba(255,255,255,0.4)',
+              textShadow: selectedCards.length === 2
+                ? '0 0 6px rgba(46,213,115,0.4)'
                 : 'none',
             }}>
-              {tab.label}
-            </span>
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: '8px',
-              fontWeight: 700,
-              color: activeTab === tab.key ? '#4DA3FF' : 'rgba(255,255,255,0.2)',
-            }}>
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
+              {selectedCards.length}/2
+            </div>
+          </div>
 
-      {/* ====== TAB KONTENT ====== */}
-      <div style={{
-        position: 'relative', zIndex: 15,
-        padding: '0 16px', marginBottom: '8px',
-        minHeight: '120px',
-      }}>
-
-        {/* === KARTALAR TAB === */}
-        {activeTab === 'cards' && (
+          {/* Kartalar — 3 ustun, o'rtacha o'lcham */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '5px',
-            animation: 'fadeUp 0.2s ease',
+            gap: '6px',
           }}>
             {DEMO_INVENTORY.map((card) => {
               const isSelected = selectedCards.includes(card.id);
@@ -239,49 +221,50 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
                   key={card.id}
                   onClick={() => toggleCard(card.id)}
                   style={{
-                    padding: '6px', borderRadius: '8px',
+                    padding: '10px 8px', borderRadius: '10px',
                     border: isSelected
                       ? '1.5px solid rgba(166,77,255,0.5)'
                       : '1px solid rgba(255,255,255,0.06)',
                     background: isSelected
-                      ? 'rgba(166,77,255,0.12)'
+                      ? 'rgba(166,77,255,0.15)'
                       : 'rgba(0,0,0,0.55)',
                     backdropFilter: 'blur(8px)',
-                    cursor: 'pointer', textAlign: 'left',
+                    cursor: 'pointer', textAlign: 'center',
                     position: 'relative', transition: 'all 0.2s ease',
                     boxShadow: isSelected
-                      ? '0 0 10px rgba(166,77,255,0.15)'
+                      ? '0 0 12px rgba(166,77,255,0.2)'
                       : 'none',
                   }}
                 >
                   {isSelected && (
                     <div style={{
-                      position: 'absolute', top: '3px', right: '3px',
-                      width: '14px', height: '14px', borderRadius: '50%',
+                      position: 'absolute', top: '4px', right: '4px',
+                      width: '16px', height: '16px', borderRadius: '50%',
                       background: '#A64DFF',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '7px', color: '#fff', fontWeight: 700,
+                      fontSize: '8px', color: '#fff', fontWeight: 700,
+                      boxShadow: '0 0 6px rgba(166,77,255,0.4)',
                     }}>✓</div>
                   )}
-                  <div style={{ fontSize: '16px', marginBottom: '2px' }}>{card.icon}</div>
+                  <div style={{ fontSize: '22px', marginBottom: '3px' }}>{card.icon}</div>
                   <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '8px',
+                    fontFamily: 'var(--font-display)', fontSize: '10px',
                     fontWeight: 700, color: '#fff',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     {card.title}
                   </div>
                   <div style={{
-                    display: 'flex', justifyContent: 'space-between', marginTop: '2px',
+                    display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '3px',
                   }}>
                     <span style={{
-                      fontFamily: 'var(--font-body)', fontSize: '7px',
+                      fontFamily: 'var(--font-body)', fontSize: '8px',
                       color: 'rgba(255,255,255,0.3)',
                     }}>
                       {card.category}
                     </span>
                     <span style={{
-                      fontFamily: 'var(--font-display)', fontSize: '7px',
+                      fontFamily: 'var(--font-display)', fontSize: '8px',
                       fontWeight: 700, color: '#ff006e',
                     }}>
                       ⚡{card.power}
@@ -291,14 +274,84 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
               );
             })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* === MAVZULAR TAB === */}
-        {activeTab === 'topics' && (
+      {/* ====== BOSQICH 2: MAVZULAR ====== */}
+      {step === 'topics' && (
+        <div style={{
+          position: 'relative', zIndex: 15,
+          padding: '0 16px', marginBottom: '10px',
+          animation: 'fadeUp 0.3s ease',
+        }}>
+          {/* Sarlavha + ortga qaytish */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+              <button
+                onClick={() => { hapticImpact('light'); setStep('cards'); }}
+                style={{
+                  width: '20px', height: '20px', borderRadius: '4px',
+                  background: 'rgba(166,77,255,0.12)',
+                  border: '1px solid rgba(166,77,255,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', fontSize: '10px', color: '#A64DFF',
+                }}
+              >←</button>
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: '12px',
+                fontWeight: 700, color: '#fff',
+                textShadow: '0 0 8px rgba(166,77,255,0.4)',
+              }}>
+                📋 MAVZU TANLA
+              </div>
+            </div>
+            {votedTopic && (
+              <div style={{
+                fontFamily: 'var(--font-display)', fontSize: '9px',
+                fontWeight: 700, color: '#2ed573',
+                textShadow: '0 0 6px rgba(46,213,115,0.3)',
+              }}>
+                ✓ Tanlandi
+              </div>
+            )}
+          </div>
+
+          {/* Tanlangan kartalar — kichik ko'rinishda */}
+          <div style={{
+            display: 'flex', gap: '4px', marginBottom: '8px',
+          }}>
+            {selectedCards.map((cardId) => {
+              const card = DEMO_INVENTORY.find((c) => c.id === cardId);
+              if (!card) return null;
+              return (
+                <div key={cardId} style={{
+                  padding: '4px 8px', borderRadius: '6px',
+                  background: 'rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(166,77,255,0.2)',
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                }}>
+                  <span style={{ fontSize: '12px' }}>{card.icon}</span>
+                  <span style={{
+                    fontFamily: 'var(--font-display)', fontSize: '8px',
+                    fontWeight: 600, color: 'rgba(255,255,255,0.6)',
+                  }}>
+                    {card.title}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mavzular — 3x2 grid */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '5px',
-            animation: 'fadeUp 0.2s ease',
+            gap: '6px',
           }}>
             {TOPICS.map((topic) => {
               const isSelected = votedTopic === topic.id;
@@ -311,48 +364,50 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
                   key={topic.id}
                   onClick={() => voteTopic(topic.id)}
                   style={{
-                    padding: '6px', borderRadius: '8px',
+                    padding: '10px 6px', borderRadius: '10px',
                     border: isSelected
                       ? `1.5px solid ${topic.color}80`
                       : '1px solid rgba(255,255,255,0.06)',
                     background: isSelected
-                      ? `${topic.color}12`
+                      ? `${topic.color}15`
                       : 'rgba(0,0,0,0.5)',
                     backdropFilter: 'blur(8px)',
                     cursor: 'pointer', textAlign: 'center',
                     position: 'relative', overflow: 'hidden',
                     transition: 'all 0.2s ease',
                     boxShadow: isSelected
-                      ? `0 0 10px ${topic.color}20`
+                      ? `0 0 12px ${topic.color}25`
                       : 'none',
                   }}
                 >
+                  {/* Ovoz progress */}
                   <div style={{
                     position: 'absolute', bottom: 0, left: 0,
                     width: `${votePercent}%`, height: '2px',
                     background: topic.color, borderRadius: '0 2px 0 0',
                     transition: 'width 0.3s ease',
                   }} />
-                  <div style={{ fontSize: '18px', marginBottom: '2px' }}>{topic.icon}</div>
+                  <div style={{ fontSize: '22px', marginBottom: '3px' }}>{topic.icon}</div>
                   <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '9px',
+                    fontFamily: 'var(--font-display)', fontSize: '10px',
                     fontWeight: 700, color: isSelected ? topic.color : '#fff',
                     textShadow: isSelected ? `0 0 6px ${topic.color}40` : 'none',
                   }}>
                     {topic.name}
                   </div>
                   <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '7px',
+                    fontFamily: 'var(--font-display)', fontSize: '8px',
                     fontWeight: 700, color: 'rgba(255,255,255,0.25)',
+                    marginTop: '2px',
                   }}>
-                    {votes}
+                    {votes} ovoz
                   </div>
                 </button>
               );
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ====== TAYYOR TUGMASI ====== */}
       <div style={{
@@ -363,14 +418,14 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       }}>
         {isReady ? (
           <div style={{
-            padding: '8px', borderRadius: '8px',
+            padding: '10px', borderRadius: '10px',
             background: 'rgba(0,0,0,0.6)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(46,213,115,0.2)',
             textAlign: 'center',
           }}>
             <div style={{
-              fontFamily: 'var(--font-display)', fontSize: '11px',
+              fontFamily: 'var(--font-display)', fontSize: '12px',
               fontWeight: 700, color: '#2ed573',
               textShadow: '0 0 8px rgba(46,213,115,0.3)',
             }}>
@@ -382,24 +437,21 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
             onClick={handleReady}
             disabled={!canReady}
             style={{
-              width: '100%', padding: '10px', borderRadius: '10px', border: 'none',
+              width: '100%', padding: '12px', borderRadius: '10px', border: 'none',
               background: canReady
                 ? 'linear-gradient(135deg, #A64DFF, #4DA3FF)'
                 : 'rgba(0,0,0,0.5)',
-              fontFamily: 'var(--font-display)', fontSize: '12px',
+              fontFamily: 'var(--font-display)', fontSize: '13px',
               fontWeight: 700, letterSpacing: '1.5px',
               color: canReady ? '#fff' : 'rgba(255,255,255,0.25)',
               cursor: canReady ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s ease',
               backdropFilter: 'blur(6px)',
               boxShadow: canReady ? '0 0 20px rgba(166,77,255,0.3)' : 'none',
-              textShadow: canReady ? '0 0 6px rgba(255,255,255,0.3)' : 'none',
             }}
           >
-            {!selectedCards.length
-              ? '🎴 2 TA KARTA TANLA'
-              : selectedCards.length < 2
-              ? '🎴 YANA 1 TA KARTA'
+            {step === 'cards'
+              ? `🎴 ${selectedCards.length}/2 KARTA TANLANDI`
               : !votedTopic
               ? '📋 MAVZU TANLA'
               : '✅ TAYYOR'}
@@ -409,7 +461,7 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
 
       <style>{`
         @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(8px); }
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
