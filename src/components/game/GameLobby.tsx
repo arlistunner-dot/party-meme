@@ -30,8 +30,6 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
   const [selectedCards, setSelectedCards] = useState<string[]>([]);
   const [votedTopic, setVotedTopic] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-
-  // BOSQICH: 'cards' → 'topics'
   const [step, setStep] = useState<'cards' | 'topics'>('cards');
 
   const [topicVotes, setTopicVotes] = useState<Record<string, number>>(() => {
@@ -42,14 +40,12 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
 
   const canReady = selectedCards.length === 2 && votedTopic !== null;
 
-  // 30 soniya taymer
   useEffect(() => {
     if (timeLeft <= 0) { hapticSuccess(); onStart(); return; }
     const timer = setInterval(() => setTimeLeft((p) => p - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, onStart]);
 
-  // Simulyatsiya — boshqalar ovoz beradi
   useEffect(() => {
     const interval = setInterval(() => {
       const rt = TOPICS[Math.floor(Math.random() * TOPICS.length)];
@@ -58,7 +54,6 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     return () => clearInterval(interval);
   }, []);
 
-  // Karta tanlash — 2 tasi tanlanganda avtomatik mavzuga o'tadi
   const toggleCard = (cardId: string) => {
     hapticImpact('light');
     if (selectedCards.includes(cardId)) {
@@ -70,8 +65,6 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       }
       const newCards = [...selectedCards, cardId];
       setSelectedCards(newCards);
-
-      // 2 ta tanlandi — avtomatik mavzuga o'tadi
       if (newCards.length === 2) {
         setTimeout(() => {
           hapticSuccess();
@@ -81,7 +74,6 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
     }
   };
 
-  // Mavzuga ovoz berish
   const voteTopic = (topicId: string) => {
     hapticSelection();
     if (votedTopic === topicId) return;
@@ -128,8 +120,8 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       <div style={{
         position: 'relative', zIndex: 20,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 12px',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+        padding: '10px 14px',
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
         background: 'rgba(0,0,0,0.45)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(166,77,255,0.15)',
@@ -138,24 +130,24 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
         <button
           onClick={() => { hapticImpact('light'); onCancel(); }}
           style={{
-            width: '28px', height: '28px', borderRadius: '6px',
+            width: '32px', height: '32px', borderRadius: '8px',
             background: 'rgba(166,77,255,0.12)',
             border: '1px solid rgba(166,77,255,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: '13px', color: '#A64DFF',
+            cursor: 'pointer', fontSize: '14px', color: '#A64DFF',
           }}
         >←</button>
 
         <div style={{ textAlign: 'center' }}>
           <div style={{
-            fontFamily: 'var(--font-display)', fontSize: '12px',
-            fontWeight: 700, color: '#fff', letterSpacing: '1.5px',
-            textShadow: '0 0 8px rgba(166,77,255,0.4)',
+            fontFamily: 'var(--font-display)', fontSize: '14px',
+            fontWeight: 700, color: '#fff', letterSpacing: '2px',
+            textShadow: '0 0 10px rgba(166,77,255,0.5)',
           }}>
             TAYYORLANISH
           </div>
           <div style={{
-            fontFamily: 'var(--font-body)', fontSize: '8px',
+            fontFamily: 'var(--font-body)', fontSize: '9px',
             color: 'rgba(77,163,255,0.6)',
           }}>
             7/7 o'yinchi
@@ -163,56 +155,54 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
         </div>
 
         <div style={{
-          width: '32px', height: '32px', borderRadius: '50%',
-          background: `rgba(${timeLeft <= 10 ? '255,71,87' : timeLeft <= 20 ? '255,165,0' : '77,163,255'},0.1)`,
-          border: `1.5px solid ${timerColor}`,
+          width: '36px', height: '36px', borderRadius: '50%',
+          background: `rgba(${timeLeft <= 10 ? '255,71,87' : timeLeft <= 20 ? '255,165,0' : '77,163,255'},0.12)`,
+          border: `2px solid ${timerColor}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--font-display)', fontSize: '12px',
+          fontFamily: 'var(--font-display)', fontSize: '13px',
           fontWeight: 700, color: timerColor,
-          boxShadow: `0 0 8px ${timerColor}30`,
+          boxShadow: `0 0 10px ${timerColor}30`,
         }}>
           {timeLeft}
         </div>
       </div>
 
-      {/* ====== BO'SH — LOGO KO'RINADI ====== */}
-      <div style={{ flex: 1 }} />
+      {/* ====== BO'SH — LOGO UCHUN (kichikroq) ====== */}
+      <div style={{ flex: 0.4 }} />
 
       {/* ====== BOSQICH 1: KARTALAR ====== */}
       {step === 'cards' && (
         <div style={{
           position: 'relative', zIndex: 15,
-          padding: '0 16px', marginBottom: '10px',
+          padding: '0 16px', marginBottom: '12px',
           animation: 'fadeUp 0.3s ease',
         }}>
-          {/* Sarlavha */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: '8px',
+            marginBottom: '10px',
           }}>
             <div style={{
-              fontFamily: 'var(--font-display)', fontSize: '12px',
+              fontFamily: 'var(--font-display)', fontSize: '14px',
               fontWeight: 700, color: '#fff',
-              textShadow: '0 0 8px rgba(166,77,255,0.4)',
+              textShadow: '0 0 10px rgba(166,77,255,0.5)',
             }}>
               🎴 2 TA KARTA TANLA
             </div>
             <div style={{
-              fontFamily: 'var(--font-display)', fontSize: '11px',
+              fontFamily: 'var(--font-display)', fontSize: '13px',
               fontWeight: 700,
               color: selectedCards.length === 2 ? '#2ed573' : 'rgba(255,255,255,0.4)',
               textShadow: selectedCards.length === 2
-                ? '0 0 6px rgba(46,213,115,0.4)'
+                ? '0 0 8px rgba(46,213,115,0.4)'
                 : 'none',
             }}>
               {selectedCards.length}/2
             </div>
           </div>
 
-          {/* Kartalar — 3 ustun, o'rtacha o'lcham */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '6px',
+            gap: '8px',
           }}>
             {DEMO_INVENTORY.map((card) => {
               const isSelected = selectedCards.includes(card.id);
@@ -221,7 +211,7 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
                   key={card.id}
                   onClick={() => toggleCard(card.id)}
                   style={{
-                    padding: '10px 8px', borderRadius: '10px',
+                    padding: '14px 10px', borderRadius: '12px',
                     border: isSelected
                       ? '1.5px solid rgba(166,77,255,0.5)'
                       : '1px solid rgba(255,255,255,0.06)',
@@ -232,39 +222,39 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
                     cursor: 'pointer', textAlign: 'center',
                     position: 'relative', transition: 'all 0.2s ease',
                     boxShadow: isSelected
-                      ? '0 0 12px rgba(166,77,255,0.2)'
+                      ? '0 0 14px rgba(166,77,255,0.2)'
                       : 'none',
                   }}
                 >
                   {isSelected && (
                     <div style={{
-                      position: 'absolute', top: '4px', right: '4px',
-                      width: '16px', height: '16px', borderRadius: '50%',
+                      position: 'absolute', top: '5px', right: '5px',
+                      width: '18px', height: '18px', borderRadius: '50%',
                       background: '#A64DFF',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '8px', color: '#fff', fontWeight: 700,
-                      boxShadow: '0 0 6px rgba(166,77,255,0.4)',
+                      fontSize: '9px', color: '#fff', fontWeight: 700,
+                      boxShadow: '0 0 8px rgba(166,77,255,0.4)',
                     }}>✓</div>
                   )}
-                  <div style={{ fontSize: '22px', marginBottom: '3px' }}>{card.icon}</div>
+                  <div style={{ fontSize: '26px', marginBottom: '4px' }}>{card.icon}</div>
                   <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '10px',
+                    fontFamily: 'var(--font-display)', fontSize: '11px',
                     fontWeight: 700, color: '#fff',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     {card.title}
                   </div>
                   <div style={{
-                    display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '3px',
+                    display: 'flex', justifyContent: 'center', gap: '5px', marginTop: '4px',
                   }}>
                     <span style={{
-                      fontFamily: 'var(--font-body)', fontSize: '8px',
+                      fontFamily: 'var(--font-body)', fontSize: '9px',
                       color: 'rgba(255,255,255,0.3)',
                     }}>
                       {card.category}
                     </span>
                     <span style={{
-                      fontFamily: 'var(--font-display)', fontSize: '8px',
+                      fontFamily: 'var(--font-display)', fontSize: '9px',
                       fontWeight: 700, color: '#ff006e',
                     }}>
                       ⚡{card.power}
@@ -281,38 +271,37 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       {step === 'topics' && (
         <div style={{
           position: 'relative', zIndex: 15,
-          padding: '0 16px', marginBottom: '10px',
+          padding: '0 16px', marginBottom: '12px',
           animation: 'fadeUp 0.3s ease',
         }}>
-          {/* Sarlavha + ortga qaytish */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: '8px',
+            marginBottom: '10px',
           }}>
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
+              display: 'flex', alignItems: 'center', gap: '8px',
             }}>
               <button
                 onClick={() => { hapticImpact('light'); setStep('cards'); }}
                 style={{
-                  width: '20px', height: '20px', borderRadius: '4px',
+                  width: '24px', height: '24px', borderRadius: '6px',
                   background: 'rgba(166,77,255,0.12)',
                   border: '1px solid rgba(166,77,255,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', fontSize: '10px', color: '#A64DFF',
+                  cursor: 'pointer', fontSize: '11px', color: '#A64DFF',
                 }}
               >←</button>
               <div style={{
-                fontFamily: 'var(--font-display)', fontSize: '12px',
+                fontFamily: 'var(--font-display)', fontSize: '14px',
                 fontWeight: 700, color: '#fff',
-                textShadow: '0 0 8px rgba(166,77,255,0.4)',
+                textShadow: '0 0 10px rgba(166,77,255,0.5)',
               }}>
                 📋 MAVZU TANLA
               </div>
             </div>
             {votedTopic && (
               <div style={{
-                fontFamily: 'var(--font-display)', fontSize: '9px',
+                fontFamily: 'var(--font-display)', fontSize: '10px',
                 fontWeight: 700, color: '#2ed573',
                 textShadow: '0 0 6px rgba(46,213,115,0.3)',
               }}>
@@ -321,24 +310,25 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
             )}
           </div>
 
-          {/* Tanlangan kartalar — kichik ko'rinishda */}
+          {/* Tanlangan kartalar — kichik */}
           <div style={{
-            display: 'flex', gap: '4px', marginBottom: '8px',
+            display: 'flex', gap: '5px', marginBottom: '10px',
           }}>
             {selectedCards.map((cardId) => {
               const card = DEMO_INVENTORY.find((c) => c.id === cardId);
               if (!card) return null;
               return (
                 <div key={cardId} style={{
-                  padding: '4px 8px', borderRadius: '6px',
-                  background: 'rgba(0,0,0,0.5)',
+                  padding: '5px 10px', borderRadius: '8px',
+                  background: 'rgba(0,0,0,0.55)',
                   backdropFilter: 'blur(6px)',
                   border: '1px solid rgba(166,77,255,0.2)',
-                  display: 'flex', alignItems: 'center', gap: '4px',
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  boxShadow: '0 0 6px rgba(166,77,255,0.1)',
                 }}>
-                  <span style={{ fontSize: '12px' }}>{card.icon}</span>
+                  <span style={{ fontSize: '14px' }}>{card.icon}</span>
                   <span style={{
-                    fontFamily: 'var(--font-display)', fontSize: '8px',
+                    fontFamily: 'var(--font-display)', fontSize: '10px',
                     fontWeight: 600, color: 'rgba(255,255,255,0.6)',
                   }}>
                     {card.title}
@@ -348,10 +338,10 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
             })}
           </div>
 
-          {/* Mavzular — 3x2 grid */}
+          {/* Mavzular — 3x2 grid, kattaroq */}
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '6px',
+            gap: '8px',
           }}>
             {TOPICS.map((topic) => {
               const isSelected = votedTopic === topic.id;
@@ -364,39 +354,38 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
                   key={topic.id}
                   onClick={() => voteTopic(topic.id)}
                   style={{
-                    padding: '10px 6px', borderRadius: '10px',
+                    padding: '14px 8px', borderRadius: '12px',
                     border: isSelected
                       ? `1.5px solid ${topic.color}80`
                       : '1px solid rgba(255,255,255,0.06)',
                     background: isSelected
                       ? `${topic.color}15`
-                      : 'rgba(0,0,0,0.5)',
+                      : 'rgba(0,0,0,0.55)',
                     backdropFilter: 'blur(8px)',
                     cursor: 'pointer', textAlign: 'center',
                     position: 'relative', overflow: 'hidden',
                     transition: 'all 0.2s ease',
                     boxShadow: isSelected
-                      ? `0 0 12px ${topic.color}25`
+                      ? `0 0 14px ${topic.color}25`
                       : 'none',
                   }}
                 >
-                  {/* Ovoz progress */}
                   <div style={{
                     position: 'absolute', bottom: 0, left: 0,
-                    width: `${votePercent}%`, height: '2px',
+                    width: `${votePercent}%`, height: '3px',
                     background: topic.color, borderRadius: '0 2px 0 0',
                     transition: 'width 0.3s ease',
                   }} />
-                  <div style={{ fontSize: '22px', marginBottom: '3px' }}>{topic.icon}</div>
+                  <div style={{ fontSize: '26px', marginBottom: '4px' }}>{topic.icon}</div>
                   <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '10px',
+                    fontFamily: 'var(--font-display)', fontSize: '11px',
                     fontWeight: 700, color: isSelected ? topic.color : '#fff',
-                    textShadow: isSelected ? `0 0 6px ${topic.color}40` : 'none',
+                    textShadow: isSelected ? `0 0 8px ${topic.color}40` : 'none',
                   }}>
                     {topic.name}
                   </div>
                   <div style={{
-                    fontFamily: 'var(--font-display)', fontSize: '8px',
+                    fontFamily: 'var(--font-display)', fontSize: '9px',
                     fontWeight: 700, color: 'rgba(255,255,255,0.25)',
                     marginTop: '2px',
                   }}>
@@ -412,22 +401,22 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
       {/* ====== TAYYOR TUGMASI ====== */}
       <div style={{
         position: 'relative', zIndex: 20,
-        padding: '8px 16px',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+        padding: '10px 16px',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
         flexShrink: 0,
       }}>
         {isReady ? (
           <div style={{
-            padding: '10px', borderRadius: '10px',
+            padding: '12px', borderRadius: '12px',
             background: 'rgba(0,0,0,0.6)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(46,213,115,0.2)',
             textAlign: 'center',
           }}>
             <div style={{
-              fontFamily: 'var(--font-display)', fontSize: '12px',
+              fontFamily: 'var(--font-display)', fontSize: '13px',
               fontWeight: 700, color: '#2ed573',
-              textShadow: '0 0 8px rgba(46,213,115,0.3)',
+              textShadow: '0 0 10px rgba(46,213,115,0.3)',
             }}>
               ✅ TAYYOR! Kutilmoqda...
             </div>
@@ -437,17 +426,17 @@ export default function GameLobby({ onStart, onCancel }: GameLobbyProps) {
             onClick={handleReady}
             disabled={!canReady}
             style={{
-              width: '100%', padding: '12px', borderRadius: '10px', border: 'none',
+              width: '100%', padding: '14px', borderRadius: '12px', border: 'none',
               background: canReady
                 ? 'linear-gradient(135deg, #A64DFF, #4DA3FF)'
                 : 'rgba(0,0,0,0.5)',
-              fontFamily: 'var(--font-display)', fontSize: '13px',
+              fontFamily: 'var(--font-display)', fontSize: '14px',
               fontWeight: 700, letterSpacing: '1.5px',
               color: canReady ? '#fff' : 'rgba(255,255,255,0.25)',
               cursor: canReady ? 'pointer' : 'not-allowed',
               transition: 'all 0.2s ease',
               backdropFilter: 'blur(6px)',
-              boxShadow: canReady ? '0 0 20px rgba(166,77,255,0.3)' : 'none',
+              boxShadow: canReady ? '0 0 24px rgba(166,77,255,0.3)' : 'none',
             }}
           >
             {step === 'cards'
