@@ -155,12 +155,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
   }, [countdown, phase]);
 
   useEffect(() => {
-    if (phase !== 'showQuestion') return;
-    const t = setTimeout(() => setPhase('playing'), 1500);
-    return () => clearTimeout(t);
-  }, [phase]);
-
-  useEffect(() => {
     if (phase !== 'playing') return;
     if (roundTimer <= 0) {
       setIsTimeWarning(true);
@@ -347,37 +341,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                 textShadow: '0 2px 8px rgba(0,0,0,0.8)',
               }}>
                 ROUND {round}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ======== SHOW QUESTION ======== */}
-        {phase === 'showQuestion' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', animation: 'fadeUp 0.4s ease' }}>
-              <div style={{
-                padding: '16px 20px', borderRadius: '12px',
-                background: 'rgba(0,0,0,0.55)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(166,77,255,0.35)',
-                maxWidth: '300px', textAlign: 'center',
-                boxShadow: '0 0 40px rgba(166,77,255,0.15)',
-              }}>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔴</div>
-                <div style={{
-                  fontFamily: 'var(--font-display)', fontSize: '14px',
-                  fontWeight: 700, color: '#fff', lineHeight: 1.4,
-                }}>
-                  {currentRed.text}
-                </div>
-              </div>
-              <div style={{
-                marginTop: '10px', fontFamily: 'var(--font-display)',
-                fontSize: '9px', color: 'rgba(77,163,255,0.5)', letterSpacing: '2px',
-                textShadow: '0 2px 6px rgba(0,0,0,0.8)',
-              }}>
-                SELECT YOUR CARD
               </div>
             </div>
           </div>
