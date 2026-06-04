@@ -94,7 +94,8 @@ const SEAT_POSITIONS = [
 // KOMPONENT
 // ================================================================
 export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
-  type Phase = 'waiting' | 'showQuestion' | 'playing' | 'voting' | 'result';
+  // ✅ showQuestion o'chirildi
+  type Phase = 'waiting' | 'playing' | 'voting' | 'result';
 
   const [phase, setPhase] = useState<Phase>('waiting');
   const [round, setRound] = useState(1);
@@ -147,12 +148,15 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
 
   useEffect(() => { startRound(); }, []);
 
+  // ✅ Countdown → to'g'ridan-to'g'ri playing
   useEffect(() => {
     if (phase !== 'waiting') return;
-    if (countdown <= 0) { setPhase('showQuestion'); return; }
+    if (countdown <= 0) { setPhase('playing'); return; }
     const t = setTimeout(() => { hapticImpact('light'); setCountdown((c) => c - 1); }, 800);
     return () => clearTimeout(t);
   }, [countdown, phase]);
+
+  // ✅ showQuestion effekti O'CHIRILDI — kerak emas
 
   useEffect(() => {
     if (phase !== 'playing') return;
@@ -214,9 +218,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
       position: 'relative', overflow: 'hidden',
     }}>
 
-      {/* ==============================================================
-          FON RASMI — BUTUN EKRAN, HAR DOIM KO'RINADI
-          ============================================================== */}
+      {/* ====== FON RASMI ====== */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0,
         backgroundImage: 'url(/assets/game-bg.png)',
@@ -224,8 +226,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
       }} />
-
-      {/* Yengil qoraytirish — matn o'qilishi uchun */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 1,
         background: 'rgba(0,0,0,0.25)',
@@ -284,8 +284,8 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
             fontFamily: 'var(--font-body)', fontSize: '7px',
             color: 'rgba(166,77,255,0.6)', marginTop: '1px', letterSpacing: '1px',
           }}>
+            {/* ✅ showQuestion o'chirildi */}
             {phase === 'waiting' ? 'INITIALIZING...' :
-             phase === 'showQuestion' ? 'DECRYPTING...' :
              phase === 'playing' ? 'SELECT CARD' :
              phase === 'voting' ? 'VOTING...' : 'RESULT'}
           </div>
@@ -307,9 +307,7 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
         </div>
       </div>
 
-      {/* ================================================================
-          SCENE — FON RASMI USTIDA
-          ================================================================ */}
+      {/* ====== SCENE — FON RASMI USTIDA ====== */}
       <div style={{
         position: 'relative', zIndex: 10, flex: 1,
         display: 'flex', flexDirection: 'column',
@@ -346,22 +344,19 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
           </div>
         )}
 
-        {/* ============================================================
-            PLAYING — FON RASMI USTIDA, O'YINCHILAR STULLARDA
-            ============================================================ */}
+        {/* ✅ showQuestion blok O'CHIRILDI — kerak emas */}
+
+        {/* ======== PLAYING ======== */}
         {phase === 'playing' && (
           <div style={{
             flex: 1, position: 'relative',
             display: 'flex', flexDirection: 'column',
             minHeight: 0, overflow: 'hidden',
           }}>
-
-            {/* ====== SCENE — fon rasm allaqachon ko'rinadi ====== */}
             <div style={{
               flex: 1, position: 'relative', minHeight: 0,
             }}>
-
-              {/* QIZIL SAVOL KARTASI — stol ustida */}
+              {/* QIZIL SAVOL KARTASI */}
               <div style={{
                 position: 'absolute',
                 top: '62%', left: '50%',
@@ -397,7 +392,6 @@ export default function GameScreen({ onNavigate, onGameEnd }: GameScreenProps) {
                     display: 'flex', flexDirection: 'column', alignItems: 'center',
                     zIndex: 15, gap: '2px',
                   }}>
-                    {/* Avatar — 54px, emoji 24px */}
                     <div style={{
                       position: 'relative',
                       width: '54px', height: '54px', borderRadius: '50%',
